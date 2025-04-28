@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import {errorHandler} from './middlewares/errorHandler.middleware.js'
 import authRoutes from "./routes/auth.routes.js";
+import problemsRoutes from "./routes/problem.routes.js";
 
 const app = express();
 
@@ -23,5 +24,6 @@ app.use(
 
 
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/problem", problemsRoutes);
 
 export default app;

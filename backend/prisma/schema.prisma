@@ -32,7 +32,7 @@ model User {
   image     String?
   role      UserRole @default(USER)
   password  String
-  cratedAt  DateTime @default(now())
+  createdAt  DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   problems Problem[]
@@ -45,7 +45,7 @@ model Problem {
   difficulty         Difficulty @default(EASY)
   tags               String[]
   userId             String
-  example            Json
+  examples           Json
   constraints        String
   hints              String?
   editorial          String?

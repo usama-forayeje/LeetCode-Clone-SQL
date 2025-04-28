@@ -1,3 +1,4 @@
+import { db } from "../../config/db.js";
 import { ApiError } from "../utils/api-errors.js";
 import { ApiResponse } from "../utils/api-response.js";
 import asyncHandler from "../utils/async-handler.js";
@@ -6,6 +7,7 @@ import {
   pollBatchResults,
   submitBatch,
 } from "../utils/judge0.js";
+import { logger } from "../utils/logger.js";
 
 // Create a new problem
 export const createProblem = asyncHandler(async (req, res) => {
@@ -14,9 +16,8 @@ export const createProblem = asyncHandler(async (req, res) => {
     description,
     difficulty,
     tags,
-    example,
+    examples,
     constraints,
-    hints,
     testcases,
     codeSnippets,
     referenceSolutions,
@@ -31,8 +32,7 @@ export const createProblem = asyncHandler(async (req, res) => {
 
   // Validate all reference solutions before saving the problem
   for (const [language, solutionCode] of Object.entries(referenceSolutions)) {
-    const languageId = await getJudge0LanguageId(language); // Get language ID for Judge0
-
+    const languageId = getJudge0LanguageId(language); // Get language ID for Judge0
     if (!languageId) {
       return res
         .status(400)
@@ -42,7 +42,7 @@ export const createProblem = asyncHandler(async (req, res) => {
     // Prepare submissions for all testcases using the solution code
     const submissions = testcases.map(({ input, output }) => ({
       source_code: solutionCode,
-      language_id: languageId, // Corrected typo: language_id
+      language_id: languageId,
       stdin: input,
       expected_output: output,
     }));
@@ -59,7 +59,7 @@ export const createProblem = asyncHandler(async (req, res) => {
     // Check if all testcases passed
     for (let i = 0; i < results.length; i++) {
       const result = results[i];
-
+      logger.info("Result------", result);
       // If any testcase fails, return error
       if (result.status.id !== 3) {
         return res
@@ -74,7 +74,6 @@ export const createProblem = asyncHandler(async (req, res) => {
     }
   }
 
-  
   // If all solutions pass, then create the problem
   const newProblem = await db.problem.create({
     data: {
@@ -82,12 +81,11 @@ export const createProblem = asyncHandler(async (req, res) => {
       description,
       difficulty,
       tags,
-      example,
+      examples,
       constraints,
       testcases,
       codeSnippets,
       referenceSolutions,
-      hints,
       userId: req.user.id,
     },
   });
