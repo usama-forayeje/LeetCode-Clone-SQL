@@ -1,5 +1,5 @@
 import express from "express";
-import { profile, signIn, signOut, signUp, verify } from "../controllers/auth.controllers.js";
+import { profile, signIn, signOut, signUp, verify } from "../controllers/auth.controller.js";
 import { verifyJWT } from "../middlewares/verifyJWT.js";
 
 const authRoutes = express.Router()
