@@ -34,7 +34,7 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
 
     req.user = user;
 
-    logger.info("User verified: ", req.user); // Debugging line
+    logger.info("User verified: ", req.user);
     next();
   } catch (error) {
     logger.error(`Token verification failed: ${error.message}`);

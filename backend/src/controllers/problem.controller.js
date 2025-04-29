@@ -9,7 +9,6 @@ import {
 } from "../utils/judge0.js";
 import { logger } from "../utils/logger.js";
 
-// Create a new problem
 export const createProblem = asyncHandler(async (req, res) => {
   const {
     title,
@@ -96,12 +95,102 @@ export const createProblem = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, "Problem Created Successfully", newProblem));
 });
 
-export const getAllProblems = asyncHandler(async (req, res) => {});
+export const getAllProblems = asyncHandler(async (req, res) => {
+  const problem = await db.problem.findMany();
 
-export const getProblemsById = asyncHandler(async (req, res) => {});
+  if (!problem) {
+    return res.status(404).json(new ApiError(404, "No problem found"));
+  }
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Problem fetched Successfully", problem));
+});
 
-export const updateProblemsById = asyncHandler(async (req, res) => {});
+export const getProblemsById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
 
-export const deleteProblemsById = asyncHandler(async (req, res) => {});
+  const problem = await db.problem.findUnique({
+    where: {
+      id,
+    },
+  });
+
+  if (!problem) {
+    return res.status(404).json(new ApiError(404, "Problem not found"));
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Problem fetched Successfully", problem));
+});
+
+export const updateProblemsById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const {
+    title,
+    description,
+    difficulty,
+    tags,
+    examples,
+    constraints,
+    testcases,
+    codeSnippets,
+    referenceSolutions,
+  } = req.body;
+
+  const problem = await db.problem.findUnique({
+    where: {
+      id,
+    },
+  });
+
+  if (!problem) {
+    return res.status(404).json(new ApiError(404, "This Problem is not found"));
+  }
+
+  if (req.user.role !== "ADMIN") {
+    return res
+      .status(403)
+      .json(new ApiError(403, "You are not allowed to update this problem"));
+  }
+
+  const updatedProblem = await db.problem.update({
+    where: { id },
+    data: {
+      ...(title && { title }),
+      ...(description && { description }),
+      ...(difficulty && { difficulty }),
+      ...(tags && { tags }),
+      ...(examples && { examples }),
+      ...(constraints && { constraints }),
+      ...(testcases && { testcases }),
+      ...(codeSnippets && { codeSnippets }),
+      ...(referenceSolutions && { referenceSolutions }),
+      userId: req.user.id,
+    },
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Problem updated successfully",
+    data: updatedProblem,
+  });
+});
+
+export const deleteProblemsById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const problem = await db.problem.findUnique({
+    where: { id },
+  });
+
+  if (!problem) {
+    return res.status(404).json(new ApiError(404, "Problem not found"));
+  }
+
+  await db.problem.delete({ where: { id } });
+
+  res.status(200).json(new ApiResponse(200, "Problem Deleted Successfully"));
+});
 
 export const getAllSolvedProblemByUser = asyncHandler(async (req, res) => {});

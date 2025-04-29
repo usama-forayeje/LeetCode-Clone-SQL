@@ -4,6 +4,7 @@ import cors from 'cors'
 import {errorHandler} from './middlewares/errorHandler.middleware.js'
 import authRoutes from "./routes/auth.routes.js";
 import problemsRoutes from "./routes/problem.routes.js";
+import executeRoute from "./routes/executeCode.routes.js";
 
 const app = express();
 
@@ -25,5 +26,6 @@ app.use(
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/problem", problemsRoutes);
+app.use("/api/v1/execute", executeRoute);
 
 export default app;
