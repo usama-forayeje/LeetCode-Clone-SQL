@@ -1,4 +1,3 @@
-import { ApiError } from "./api-errors.js";
 import { logger } from "./logger.js";
 import axios from "axios";
 
@@ -27,7 +26,6 @@ export const submitBatch = async (submissions) => {
       }
     );
 
-    logger.info("Submissions Results:", JSON.stringify(data, null, 2));
     return data;
   } catch (error) {
     logger.error(
@@ -63,3 +61,12 @@ export const pollBatchResults = async (tokens) => {
     await sleep(1000);
   }
 };
+
+export function getLanguageName(languageId) {
+  const LANGUAGE_NAMES = {
+    71: "PYTHON",
+    62: "JAVA",
+    63: "JAVASCRIPT",
+  };
+  return LANGUAGE_NAMES[languageId] || "Unknown";
+}
