@@ -40,9 +40,20 @@ export const signUp = asyncHandler(async (req, res) => {
     maxAge: 1000 * 60 * 60 * 24 * 7, // 7d
   });
 
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: process.env.NODE_ENV !== "development",
+    maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
+  });
+
+  const { password: _, ...userWithoutPassword } = newUser;
+
   res
     .status(201)
-    .json(new ApiResponse(201, "User created successfully", newUser));
+    .json(
+      new ApiResponse(201, "User created successfully", userWithoutPassword)
+    );
 });
 
 export const verify = asyncHandler(async (req, res) => {
@@ -51,9 +62,14 @@ export const verify = asyncHandler(async (req, res) => {
   if (!token) {
     throw new ApiError(401, "Unauthorize user");
   }
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-  return res.status(200).json(200, "Token verified successfully", decoded);
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Token verified successfully", decoded));
+  } catch (error) {
+    throw new ApiError(401, "Invalid or expired token.");
+  }
 });
 
 export const signIn = asyncHandler(async (req, res) => {
@@ -84,11 +100,30 @@ export const signIn = asyncHandler(async (req, res) => {
     maxAge: 1000 * 60 * 60 * 24 * 7, // 7d
   });
 
-  res.status(200).json(new ApiResponse(200, "User signIn successfully", user));
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: process.env.NODE_ENV !== "development",
+    maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
+  });
+
+  const { password: _, ...userWithoutPassword } = user;
+
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, "User signIn successfully", userWithoutPassword)
+    );
 });
 
 export const signOut = asyncHandler(async (req, res) => {
   res.clearCookie("token", {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: process.env.NODE_ENV !== "development",
+  });
+
+  res.clearCookie("refreshToken", {
     httpOnly: true,
     sameSite: "strict",
     secure: process.env.NODE_ENV !== "development",
@@ -104,7 +139,52 @@ export const profile = asyncHandler(async (req, res) => {
     throw new ApiError(404, "User not found");
   }
 
+  const { password: _, ...userWithoutPassword } = req.user;
+
   return res
     .status(200)
-    .json(new ApiResponse(200, "User profile fetched successfully", req.user));
+    .json(
+      new ApiResponse(
+        200,
+        "User profile fetched successfully",
+        userWithoutPassword
+      )
+    );
+});
+
+export const refreshToken = asyncHandler(async (req, res) => {
+  const { refreshToken } = req.cookies;
+
+  if (!refreshToken) throw new ApiError(401, "No refresh token provided");
+
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    const user = await db.user.findUnique({ where: { id: decoded.id } });
+
+    if (!user) throw new ApiError(401, "User not found");
+
+    const { accessToken, refreshToken: newRefresh } = generateTokens(user);
+
+    res.cookie("token", accessToken, {
+      httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV !== "development",
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    });
+
+    res.cookie("refreshToken", newRefresh, {
+      httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV !== "development",
+      maxAge: 1000 * 60 * 60 * 24 * 30,
+    });
+
+    const { password: _, ...userWithoutPassword } = user;
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Access token refreshed", userWithoutPassword));
+  } catch (err) {
+    throw new ApiError(403, "Invalid refresh token");
+  }
 });

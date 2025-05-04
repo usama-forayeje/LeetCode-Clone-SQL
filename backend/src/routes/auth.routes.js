@@ -1,17 +1,26 @@
 import express from "express";
-import { profile, signIn, signOut, signUp, verify } from "../controllers/auth.controller.js";
+import {
+  profile,
+  refreshToken,
+  signIn,
+  signOut,
+  signUp,
+  verify,
+} from "../controllers/auth.controller.js";
 import { verifyJWT } from "../middlewares/verifyJWT.js";
 
-const authRoutes = express.Router()
+const authRoutes = express.Router();
 
-authRoutes.post("/signUp", signUp)
+authRoutes.post("/sign-up", signUp);
 
-authRoutes.get("/verify", verify)
+authRoutes.get("/verify", verify);
 
-authRoutes.post("/signIn", signIn)
+authRoutes.post("/sign-in", signIn);
 
-authRoutes.post("/signOut",verifyJWT, signOut)
+authRoutes.post("/sign-out", verifyJWT, signOut);
 
-authRoutes.get("/profile",verifyJWT, profile)
+authRoutes.post("/refresh-token", refreshToken);
 
-export default authRoutes
+authRoutes.get("/profile", verifyJWT, profile);
+
+export default authRoutes;
