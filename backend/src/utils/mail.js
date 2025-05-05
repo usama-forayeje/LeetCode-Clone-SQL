@@ -20,8 +20,8 @@ export const sendMail = async (options) => {
     port: process.env.MAILTRAP_PORT,
     secure: false, // true for port 465, false for other ports
     auth: {
-      user: process.env.MAILTRAP_USER,
-      pass: process.env.MAILTRAP_PASS,
+      user: process.env.MAILTRAP_USERNAME,
+      pass: process.env.MAILTRAP_PASSWORD,
     },
   });
 

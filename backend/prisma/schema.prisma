@@ -25,19 +25,32 @@ enum Difficulty {
   HARD
 }
 
+enum AuthProvider {
+  CREDENTIALS
+  GOOGLE
+  FACEBOOK
+  GITHUB
+  TWITTER
+}
+
 model User {
-  id               String    @id @default(uuid())
-  name             String?
-  email            String    @unique
-  image            String?
-  role             UserRole  @default(USER)
-  password         String
-  isVerified       Boolean   @default(false)
-  emailToken       String?
-  resetToken       String?
-  resetTokenExpiry DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  id                String       @id @default(uuid())
+  name              String?
+  email             String       @unique
+  image             String?
+  role              UserRole     @default(USER)
+  password          String?
+  provider          AuthProvider @default(CREDENTIALS)
+  isVerified        Boolean      @default(false)
+  emailToken        String?
+  emailTokenExpiry  DateTime?
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  refreshToken      String?
+  lastLoginAt       DateTime?
+  passwordChangedAt DateTime?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 
   problems      Problem[]
   submission    Submission[]
@@ -138,7 +151,7 @@ model Playlist {
 }
 
 model PlaylistProblem {
-  id         String @default(uuid())
+  id         String   @default(uuid())
   playlistId String
   problemId  String
   createdAt  DateTime @default(now())

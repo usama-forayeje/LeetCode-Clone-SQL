@@ -124,10 +124,15 @@ exports.Prisma.UserScalarFieldEnum = {
   image: 'image',
   role: 'role',
   password: 'password',
+  provider: 'provider',
   isVerified: 'isVerified',
   emailToken: 'emailToken',
+  emailTokenExpiry: 'emailTokenExpiry',
   resetToken: 'resetToken',
   resetTokenExpiry: 'resetTokenExpiry',
+  refreshToken: 'refreshToken',
+  lastLoginAt: 'lastLoginAt',
+  passwordChangedAt: 'passwordChangedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -235,6 +240,14 @@ exports.Prisma.JsonNullValueFilter = {
 exports.UserRole = exports.$Enums.UserRole = {
   ADMIN: 'ADMIN',
   USER: 'USER'
+};
+
+exports.AuthProvider = exports.$Enums.AuthProvider = {
+  CREDENTIALS: 'CREDENTIALS',
+  GOOGLE: 'GOOGLE',
+  FACEBOOK: 'FACEBOOK',
+  GITHUB: 'GITHUB',
+  TWITTER: 'TWITTER'
 };
 
 exports.Difficulty = exports.$Enums.Difficulty = {
