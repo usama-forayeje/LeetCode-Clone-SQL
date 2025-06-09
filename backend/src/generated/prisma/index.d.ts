@@ -7232,6 +7232,7 @@ export namespace Prisma {
     status: string | null
     memory: string | null
     time: string | null
+    passwordChangedAt: Date | null
     feedback: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -7249,6 +7250,7 @@ export namespace Prisma {
     status: string | null
     memory: string | null
     time: string | null
+    passwordChangedAt: Date | null
     feedback: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -7267,6 +7269,7 @@ export namespace Prisma {
     status: number
     memory: number
     time: number
+    passwordChangedAt: number
     feedback: number
     createdAt: number
     updatedAt: number
@@ -7286,6 +7289,7 @@ export namespace Prisma {
     status?: true
     memory?: true
     time?: true
+    passwordChangedAt?: true
     feedback?: true
     createdAt?: true
     updatedAt?: true
@@ -7303,6 +7307,7 @@ export namespace Prisma {
     status?: true
     memory?: true
     time?: true
+    passwordChangedAt?: true
     feedback?: true
     createdAt?: true
     updatedAt?: true
@@ -7321,6 +7326,7 @@ export namespace Prisma {
     status?: true
     memory?: true
     time?: true
+    passwordChangedAt?: true
     feedback?: true
     createdAt?: true
     updatedAt?: true
@@ -7412,6 +7418,7 @@ export namespace Prisma {
     status: string
     memory: string | null
     time: string | null
+    passwordChangedAt: Date | null
     feedback: string | null
     createdAt: Date
     updatedAt: Date
@@ -7447,6 +7454,7 @@ export namespace Prisma {
     status?: boolean
     memory?: boolean
     time?: boolean
+    passwordChangedAt?: boolean
     feedback?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -7469,6 +7477,7 @@ export namespace Prisma {
     status?: boolean
     memory?: boolean
     time?: boolean
+    passwordChangedAt?: boolean
     feedback?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -7489,6 +7498,7 @@ export namespace Prisma {
     status?: boolean
     memory?: boolean
     time?: boolean
+    passwordChangedAt?: boolean
     feedback?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -7509,6 +7519,7 @@ export namespace Prisma {
     status?: boolean
     memory?: boolean
     time?: boolean
+    passwordChangedAt?: boolean
     feedback?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -7516,7 +7527,7 @@ export namespace Prisma {
     problemId?: boolean
   }
 
-  export type SubmissionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "source_code" | "language" | "stdin" | "stdout" | "stderr" | "compileOutput" | "status" | "memory" | "time" | "feedback" | "createdAt" | "updatedAt" | "userId" | "problemId", ExtArgs["result"]["submission"]>
+  export type SubmissionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "source_code" | "language" | "stdin" | "stdout" | "stderr" | "compileOutput" | "status" | "memory" | "time" | "passwordChangedAt" | "feedback" | "createdAt" | "updatedAt" | "userId" | "problemId", ExtArgs["result"]["submission"]>
   export type SubmissionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
     problem?: boolean | Submission$problemArgs<ExtArgs>
@@ -7550,6 +7561,7 @@ export namespace Prisma {
       status: string
       memory: string | null
       time: string | null
+      passwordChangedAt: Date | null
       feedback: string | null
       createdAt: Date
       updatedAt: Date
@@ -7991,6 +8003,7 @@ export namespace Prisma {
     readonly status: FieldRef<"Submission", 'String'>
     readonly memory: FieldRef<"Submission", 'String'>
     readonly time: FieldRef<"Submission", 'String'>
+    readonly passwordChangedAt: FieldRef<"Submission", 'DateTime'>
     readonly feedback: FieldRef<"Submission", 'String'>
     readonly createdAt: FieldRef<"Submission", 'DateTime'>
     readonly updatedAt: FieldRef<"Submission", 'DateTime'>
@@ -17651,6 +17664,7 @@ export namespace Prisma {
     status: 'status',
     memory: 'memory',
     time: 'time',
+    passwordChangedAt: 'passwordChangedAt',
     feedback: 'feedback',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
@@ -18511,6 +18525,7 @@ export namespace Prisma {
     status?: StringFilter<"Submission"> | string
     memory?: StringNullableFilter<"Submission"> | string | null
     time?: StringNullableFilter<"Submission"> | string | null
+    passwordChangedAt?: DateTimeNullableFilter<"Submission"> | Date | string | null
     feedback?: StringNullableFilter<"Submission"> | string | null
     createdAt?: DateTimeFilter<"Submission"> | Date | string
     updatedAt?: DateTimeFilter<"Submission"> | Date | string
@@ -18532,6 +18547,7 @@ export namespace Prisma {
     status?: SortOrder
     memory?: SortOrderInput | SortOrder
     time?: SortOrderInput | SortOrder
+    passwordChangedAt?: SortOrderInput | SortOrder
     feedback?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -18557,6 +18573,7 @@ export namespace Prisma {
     status?: StringFilter<"Submission"> | string
     memory?: StringNullableFilter<"Submission"> | string | null
     time?: StringNullableFilter<"Submission"> | string | null
+    passwordChangedAt?: DateTimeNullableFilter<"Submission"> | Date | string | null
     feedback?: StringNullableFilter<"Submission"> | string | null
     createdAt?: DateTimeFilter<"Submission"> | Date | string
     updatedAt?: DateTimeFilter<"Submission"> | Date | string
@@ -18578,6 +18595,7 @@ export namespace Prisma {
     status?: SortOrder
     memory?: SortOrderInput | SortOrder
     time?: SortOrderInput | SortOrder
+    passwordChangedAt?: SortOrderInput | SortOrder
     feedback?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -18602,6 +18620,7 @@ export namespace Prisma {
     status?: StringWithAggregatesFilter<"Submission"> | string
     memory?: StringNullableWithAggregatesFilter<"Submission"> | string | null
     time?: StringNullableWithAggregatesFilter<"Submission"> | string | null
+    passwordChangedAt?: DateTimeNullableWithAggregatesFilter<"Submission"> | Date | string | null
     feedback?: StringNullableWithAggregatesFilter<"Submission"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Submission"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Submission"> | Date | string
@@ -19680,6 +19699,7 @@ export namespace Prisma {
     status: string
     memory?: string | null
     time?: string | null
+    passwordChangedAt?: Date | string | null
     feedback?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -19699,6 +19719,7 @@ export namespace Prisma {
     status: string
     memory?: string | null
     time?: string | null
+    passwordChangedAt?: Date | string | null
     feedback?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -19718,6 +19739,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     memory?: NullableStringFieldUpdateOperationsInput | string | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordChangedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -19737,6 +19759,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     memory?: NullableStringFieldUpdateOperationsInput | string | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordChangedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -19756,6 +19779,7 @@ export namespace Prisma {
     status: string
     memory?: string | null
     time?: string | null
+    passwordChangedAt?: Date | string | null
     feedback?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -19774,6 +19798,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     memory?: NullableStringFieldUpdateOperationsInput | string | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordChangedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -19790,6 +19815,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     memory?: NullableStringFieldUpdateOperationsInput | string | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordChangedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -21016,6 +21042,7 @@ export namespace Prisma {
     status?: SortOrder
     memory?: SortOrder
     time?: SortOrder
+    passwordChangedAt?: SortOrder
     feedback?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -21033,6 +21060,7 @@ export namespace Prisma {
     status?: SortOrder
     memory?: SortOrder
     time?: SortOrder
+    passwordChangedAt?: SortOrder
     feedback?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -21050,6 +21078,7 @@ export namespace Prisma {
     status?: SortOrder
     memory?: SortOrder
     time?: SortOrder
+    passwordChangedAt?: SortOrder
     feedback?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -23227,6 +23256,7 @@ export namespace Prisma {
     status: string
     memory?: string | null
     time?: string | null
+    passwordChangedAt?: Date | string | null
     feedback?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -23245,6 +23275,7 @@ export namespace Prisma {
     status: string
     memory?: string | null
     time?: string | null
+    passwordChangedAt?: Date | string | null
     feedback?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -23497,6 +23528,7 @@ export namespace Prisma {
     status?: StringFilter<"Submission"> | string
     memory?: StringNullableFilter<"Submission"> | string | null
     time?: StringNullableFilter<"Submission"> | string | null
+    passwordChangedAt?: DateTimeNullableFilter<"Submission"> | Date | string | null
     feedback?: StringNullableFilter<"Submission"> | string | null
     createdAt?: DateTimeFilter<"Submission"> | Date | string
     updatedAt?: DateTimeFilter<"Submission"> | Date | string
@@ -23748,6 +23780,7 @@ export namespace Prisma {
     status: string
     memory?: string | null
     time?: string | null
+    passwordChangedAt?: Date | string | null
     feedback?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -23766,6 +23799,7 @@ export namespace Prisma {
     status: string
     memory?: string | null
     time?: string | null
+    passwordChangedAt?: Date | string | null
     feedback?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -24327,6 +24361,7 @@ export namespace Prisma {
     status: string
     memory?: string | null
     time?: string | null
+    passwordChangedAt?: Date | string | null
     feedback?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -24345,6 +24380,7 @@ export namespace Prisma {
     status: string
     memory?: string | null
     time?: string | null
+    passwordChangedAt?: Date | string | null
     feedback?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -24379,6 +24415,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     memory?: NullableStringFieldUpdateOperationsInput | string | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordChangedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24397,6 +24434,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     memory?: NullableStringFieldUpdateOperationsInput | string | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordChangedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -25825,6 +25863,7 @@ export namespace Prisma {
     status: string
     memory?: string | null
     time?: string | null
+    passwordChangedAt?: Date | string | null
     feedback?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -25955,6 +25994,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     memory?: NullableStringFieldUpdateOperationsInput | string | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordChangedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -25973,6 +26013,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     memory?: NullableStringFieldUpdateOperationsInput | string | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordChangedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -25991,6 +26032,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     memory?: NullableStringFieldUpdateOperationsInput | string | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordChangedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -26147,6 +26189,7 @@ export namespace Prisma {
     status: string
     memory?: string | null
     time?: string | null
+    passwordChangedAt?: Date | string | null
     feedback?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -26187,6 +26230,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     memory?: NullableStringFieldUpdateOperationsInput | string | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordChangedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -26205,6 +26249,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     memory?: NullableStringFieldUpdateOperationsInput | string | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordChangedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -26223,6 +26268,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     memory?: NullableStringFieldUpdateOperationsInput | string | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordChangedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

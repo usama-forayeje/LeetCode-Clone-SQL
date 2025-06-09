@@ -44,21 +44,26 @@ export const verificationMailGenContent = async (username, verificationUrl) => {
   return {
     body: {
       name: username,
-      intro: "Welcome to Task Manager! We're very excited to have you on board.",
+      intro:
+        "Welcome to Task Manager! We're very excited to have you on board.",
       action: {
-        instruction: "Please verify your email address to get started.",
+        instructions: "Please verify your email address to get started.",
         button: {
           color: "#22BC66",
           text: "Verify your email",
           link: verificationUrl,
         },
       },
-      outro: "Need help, or have questions? Just reply to this email, we'd love to help.",
+      outro:
+        "Need help, or have questions? Just reply to this email, we'd love to help.",
     },
   };
 };
 
-export const forgotPasswordMailGenContent = async (username, passwordResetUrl) => {
+export const forgotPasswordMailGenContent = async (
+  username,
+  passwordResetUrl
+) => {
   return {
     body: {
       name: username,
@@ -71,7 +76,8 @@ export const forgotPasswordMailGenContent = async (username, passwordResetUrl) =
           link: passwordResetUrl,
         },
       },
-      outro: "Need help, or have questions? Just reply to this email, we'd love to help.",
+      outro:
+        "Need help, or have questions? Just reply to this email, we'd love to help.",
     },
   };
 };
@@ -85,7 +91,7 @@ export const twoFactorAuthMailGenContent = async (username, otp) => {
         instruction: `Your OTP is:`,
         button: {
           color: "#22BC66",
-          text: `${otp}`,  // Display OTP in the button itself
+          text: `${otp}`, // Display OTP in the button itself
           link: "#", // OTP verification URL if needed
         },
       },
@@ -97,8 +103,8 @@ export const twoFactorAuthMailGenContent = async (username, otp) => {
           },
         ],
       },
-      signature: "If you need assistance, feel free to reply to this email. We're happy to help.",
+      signature:
+        "If you need assistance, feel free to reply to this email. We're happy to help.",
     },
   };
 };
-

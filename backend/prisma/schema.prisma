@@ -132,6 +132,8 @@ model Submission {
   memory        String?
   time          String?
 
+  passwordChangedAt DateTime?
+
   feedback String?
 
   createdAt DateTime @default(now())

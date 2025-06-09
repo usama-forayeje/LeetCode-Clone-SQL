@@ -190,6 +190,7 @@ exports.Prisma.SubmissionScalarFieldEnum = {
   status: 'status',
   memory: 'memory',
   time: 'time',
+  passwordChangedAt: 'passwordChangedAt',
   feedback: 'feedback',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
