@@ -1,5 +1,6 @@
-import { logger } from "./logger.js";
+
 import axios from "axios";
+import { logger } from "../libs/logger.js";
 
 // Find Judge0 language ID by language name
 export const getJudge0LanguageId = (language) => {

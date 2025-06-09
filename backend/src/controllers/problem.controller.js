@@ -1,4 +1,5 @@
 import { db } from "../../config/db.js";
+import { logger } from "../libs/logger.js";
 import { ApiError } from "../utils/api-errors.js";
 import { ApiResponse } from "../utils/api-response.js";
 import asyncHandler from "../utils/async-handler.js";
@@ -7,7 +8,6 @@ import {
   pollBatchResults,
   submitBatch,
 } from "../utils/judge0.js";
-import { logger } from "../utils/logger.js";
 
 export const createProblem = asyncHandler(async (req, res) => {
   const {

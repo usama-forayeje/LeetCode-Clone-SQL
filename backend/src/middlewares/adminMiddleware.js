@@ -1,7 +1,7 @@
 import { db } from "../../config/db.js";
+import { logger } from "../libs/logger.js";
 import { ApiError } from "../utils/api-errors.js";
 import asyncHandler from "../utils/async-handler.js";
-import { logger } from "../utils/logger.js";
 
 export const isAdmin = asyncHandler(async (req, res,next) => {
   const userId = req.user.id;

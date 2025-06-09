@@ -5,8 +5,9 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
+  provider        = "prisma-client-js"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["fullTextSearchPostgres"]
 }
 
 datasource db {
@@ -25,67 +26,103 @@ enum Difficulty {
   HARD
 }
 
-enum AuthProvider {
-  CREDENTIALS
-  GOOGLE
-  FACEBOOK
-  GITHUB
-  TWITTER
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+model Social {
+  id       String  @id @default(uuid())
+  website  String?
+  twitter  String?
+  github   String?
+  linkedIn String?
+
+  BasicInfo BasicInfo?
+}
+
+model BasicInfo {
+  id       String    @id @default(uuid())
+  gender   Gender?
+  bio      String?
+  birth    DateTime?
+  socialId String?   @unique
+  socials  Social?   @relation(fields: [socialId], references: [id], onDelete: Cascade)
+
+  user User?
 }
 
 model User {
-  id                String       @id @default(uuid())
-  name              String?
-  email             String       @unique
-  image             String?
-  role              UserRole     @default(USER)
-  password          String?
-  provider          AuthProvider @default(CREDENTIALS)
-  isVerified        Boolean      @default(false)
-  emailToken        String?
-  emailTokenExpiry  DateTime?
-  resetToken        String?
-  resetTokenExpiry  DateTime?
-  refreshToken      String?
-  lastLoginAt       DateTime?
-  passwordChangedAt DateTime?
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  id                      String    @id @default(uuid())
+  fullname                String?
+  email                   String    @unique
+  username                String?   @unique
+  password                String?
+  profileImage            String    @default("https://img.freepik.com/premium-vector/men-icon-trendy-avatar-character-cheerful-happy-people-flat-vector-illustration-round-frame-male-portraits-group-team-adorable-guys-isolated-white-background_275421-282.jpg?w=826")
+  role                    UserRole  @default(USER)
+  isGoogleAuth            Boolean   @default(false)
+  isEmailVerified         Boolean   @default(false)
+  isActive                Boolean   @default(true)
+  lastLoginAt             DateTime?
+  emailVerificationToken  String?
+  emailVerificationExpiry DateTime?
+  forgotPasswordToken     String?
+  forgotPasswordExpiry    DateTime?
+  refreshToken            String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   problems      Problem[]
-  submission    Submission[]
+  submissions   Submission[]
   problemSolved ProblemSolved[]
   Playlist      Playlist[]
+
+  // Jo nayi models hain unse relations
+  purchases        Purchase[]
+  sheetAssignments SheetProblem[] // user ne jin sheets me problems solve kiye / jin sheets ke problems se interact kiya
+
+  basicInfoId String?    @unique
+  basicInfo   BasicInfo? @relation(fields: [basicInfoId], references: [id], onDelete: Cascade)
+  payment     Payment[]
 }
 
 model Problem {
-  id                 String     @id @default(uuid())
-  title              String
-  description        String
-  difficulty         Difficulty @default(EASY)
-  tags               String[]
-  userId             String
-  examples           Json
-  constraints        String
-  hints              String?
-  editorial          String?
+  id          String     @id @default(uuid())
+  title       String
+  description String
+  difficulty  Difficulty @default(EASY)
+  tags        String[]
+  userId      String
+  examples    Json
+  constraints String
+  hints       Json?
+  editorial   String?
+
+  isDemo    Boolean  @default(false)
+  isPremium Boolean  @default(false)
+  company   String[]
+
   testcases          Json
   codeSnippets       Json
   referenceSolutions Json
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
 
-  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  submission      Submission[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  submissions Submission[]
+
+  sheetAssignments SheetProblem[]
+
   problemSolved   ProblemSolved[]
   PlaylistProblem PlaylistProblem[]
 }
 
 model Submission {
-  id            String   @id @default(uuid())
-  userId        String
-  problemId     String
-  sourceCode    Json
+  id            String  @id @default(uuid())
+  source_code   Json
   language      String
   stdin         String?
   stdout        String?
@@ -94,54 +131,64 @@ model Submission {
   status        String
   memory        String?
   time          String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
 
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  problem   Problem          @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  feedback String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problemId String?
+  problem   Problem? @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
   testCases TestCaseResult[]
 }
 
 model TestCaseResult {
-  id            String   @id @default(uuid())
-  submissionId  String
+  id            String  @id @default(uuid())
   testCase      Int
   passed        Boolean
   stdout        String?
-  expected      String
   stderr        String?
+  expected      String
   compileOutput String?
   status        String
   memory        String?
   time          String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
 
-  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  submission   Submission? @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId String?
 
   @@index([submissionId])
 }
 
 model ProblemSolved {
-  id        String   @id @default(uuid())
-  userId    String
-  problemId String
+  id        String  @id @default(uuid())
+  userId    String?
+  problemId String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem Problem? @relation(fields: [problemId], references: [id], onDelete: Cascade)
 
   @@unique([userId, problemId])
 }
 
 model Playlist {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String
   description String?
+  isPrivate   Boolean @default(true)
   userId      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   problems PlaylistProblem[]
 
@@ -151,14 +198,83 @@ model Playlist {
 }
 
 model PlaylistProblem {
-  id         String   @default(uuid())
+  id         String @default(uuid())
   playlistId String
   problemId  String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
   problem  Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
 
   @@unique([problemId, playlistId])
+}
+
+model Sheet {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  languages   String[]
+  tags        String[]
+  price       Float
+  isPremium   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  purchases Purchase[]
+
+  sheetAssignments SheetProblem[]
+}
+
+model SheetProblem {
+  id        String @id @default(uuid())
+  sheetId   String
+  problemId String
+
+  orderIndex Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sheet   Sheet   @relation(fields: [sheetId], references: [id], onDelete: Cascade)
+  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  User    User?   @relation(fields: [userId], references: [id])
+  userId  String?
+
+  @@unique([sheetId, problemId])
+}
+
+model Purchase {
+  id       String   @id @default(uuid())
+  userId   String
+  sheetId  String
+  boughtAt DateTime @default(now())
+
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sheet   Sheet     @relation(fields: [sheetId], references: [id], onDelete: Cascade)
+  payment Payment[]
+
+  @@unique([userId, sheetId])
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  userId        String
+  purchaseId    String
+  amount        Float
+  currency      String
+  status        String
+  orderId       String
+  paymentId     String
+  paymentMethod String?
+  transactionId String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purchase Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([purchaseId])
 }
