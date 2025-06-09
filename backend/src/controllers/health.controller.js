@@ -1,11 +1,11 @@
-import { prisma } from "../../../libs/db.js";
+import { db } from "../../config/db.js";
 import { logger } from "../libs/logger.js";
 import { ApiError } from "../utils/api-errors.js";
+import asyncHandler from "../utils/async-handler.js";
 
-class HealthController {
-  async healthCheckHandler(req, res) {
+export const HealthController = asyncHandler(async (req, res) => {
     try {
-      const data = await prisma.user.findMany();
+      const data = await db.user.findMany();
 
       res.status(200).json({
         message: "Server is Healthy",
@@ -16,6 +16,7 @@ class HealthController {
       throw new ApiError(500, "Internal server error", error);
     }
   }
-}
+);
+ 
 
-export default HealthController;
+

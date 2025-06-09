@@ -7,6 +7,7 @@ import problemsRoutes from "./routes/problem.routes.js";
 import executeRoute from "./routes/executeCode.routes.js";
 import submissionRoutes from "./routes/submission.routes.js";
 import playlistRoutes from "./routes/playlists.routes.js";
+import healthRoute from "./routes/healthCheck.routes.js";
 
 const app = express();
 
@@ -30,5 +31,6 @@ app.use("/api/v1/problem", problemsRoutes);
 app.use("/api/v1/execute", executeRoute);
 app.use("/api/v1/submission", submissionRoutes);
 app.use("/api/v1/playlist", playlistRoutes);
+app.use("/api/v1/health", healthRoute);
 
 export default app;
