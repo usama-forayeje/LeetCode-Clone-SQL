@@ -39,7 +39,7 @@ model Social {
   github   String?
   linkedIn String?
 
-  BasicInfo BasicInfo?
+  BasicInfo BasicInfo? @relation(name: "SocialToBasicInfo")
 }
 
 model BasicInfo {
@@ -48,7 +48,7 @@ model BasicInfo {
   bio      String?
   birth    DateTime?
   socialId String?   @unique
-  socials  Social?   @relation(fields: [socialId], references: [id], onDelete: Cascade)
+  socials  Social?   @relation(name: "SocialToBasicInfo", fields: [socialId], references: [id], onDelete: Cascade)
 
   user User?
 }
@@ -70,6 +70,7 @@ model User {
   forgotPasswordToken     String?
   forgotPasswordExpiry    DateTime?
   refreshToken            String?
+  passwordChangedAt       DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -79,9 +80,8 @@ model User {
   problemSolved ProblemSolved[]
   Playlist      Playlist[]
 
-  // Jo nayi models hain unse relations
   purchases        Purchase[]
-  sheetAssignments SheetProblem[] // user ne jin sheets me problems solve kiye / jin sheets ke problems se interact kiya
+  sheetAssignments SheetProblem[]
 
   basicInfoId String?    @unique
   basicInfo   BasicInfo? @relation(fields: [basicInfoId], references: [id], onDelete: Cascade)
@@ -131,10 +131,7 @@ model Submission {
   status        String
   memory        String?
   time          String?
-
-  passwordChangedAt DateTime?
-
-  feedback String?
+  feedback      String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -145,6 +142,9 @@ model Submission {
   problem   Problem? @relation(fields: [problemId], references: [id], onDelete: Cascade)
 
   testCases TestCaseResult[]
+
+  @@index([userId])
+  @@index([problemId])
 }
 
 model TestCaseResult {
@@ -180,6 +180,8 @@ model ProblemSolved {
   problem Problem? @relation(fields: [problemId], references: [id], onDelete: Cascade)
 
   @@unique([userId, problemId])
+  @@index([userId])
+  @@index([problemId])
 }
 
 model Playlist {
@@ -200,7 +202,7 @@ model Playlist {
 }
 
 model PlaylistProblem {
-  id         String @default(uuid())
+  id         String @id @default(uuid())
   playlistId String
   problemId  String
 
@@ -241,10 +243,12 @@ model SheetProblem {
 
   sheet   Sheet   @relation(fields: [sheetId], references: [id], onDelete: Cascade)
   problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
-  User    User?   @relation(fields: [userId], references: [id])
+  User    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId  String?
 
   @@unique([sheetId, problemId])
+  @@index([userId])
+  @@index([sheetId])
 }
 
 model Purchase {

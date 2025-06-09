@@ -153,6 +153,7 @@ exports.Prisma.UserScalarFieldEnum = {
   forgotPasswordToken: 'forgotPasswordToken',
   forgotPasswordExpiry: 'forgotPasswordExpiry',
   refreshToken: 'refreshToken',
+  passwordChangedAt: 'passwordChangedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   basicInfoId: 'basicInfoId'
@@ -190,7 +191,6 @@ exports.Prisma.SubmissionScalarFieldEnum = {
   status: 'status',
   memory: 'memory',
   time: 'time',
-  passwordChangedAt: 'passwordChangedAt',
   feedback: 'feedback',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
