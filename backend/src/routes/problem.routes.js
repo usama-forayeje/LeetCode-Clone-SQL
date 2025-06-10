@@ -1,27 +1,27 @@
 import express from "express";
-import { verifyJWT } from "../middlewares/verifyJWT.js";
 import { isAdmin } from "../middlewares/adminMiddleware.js";
 import {
   createProblem,
-  deleteProblemsById,
+  deleteProblem,
   getAllProblems,
-  getAllSolvedProblemByUser,
-  getProblemsById,
-  updateProblemsById,
+  getProblemById,
+  getProblemsCount,
+  getSolvedProblems,
+  getSolvedProblemsCount,
+  updateProblem,
 } from "../controllers/problem.controller.js";
+import { isAuthenticated } from "../middlewares/auth.middleware.js";
 
 const problemsRoutes = express.Router();
 
-problemsRoutes.post("/create-problem", verifyJWT, isAdmin, createProblem);
+problemsRoutes.post("/create", isAuthenticated, isAdmin, createProblem);
+problemsRoutes.put("/:id", isAuthenticated, isAdmin, updateProblem);
+problemsRoutes.delete("/:id", isAuthenticated, isAdmin, deleteProblem);
 
-problemsRoutes.get("/get-all-problems", verifyJWT, getAllProblems);
-
-problemsRoutes.get("/get-problems/:id", verifyJWT, getProblemsById);
-
-problemsRoutes.put("/update-problems/:id", verifyJWT,isAdmin, updateProblemsById);
-
-problemsRoutes.delete("/delete-problems/:id", verifyJWT,isAdmin, deleteProblemsById);
-
-problemsRoutes.get("/get-solved-problems", verifyJWT,getAllSolvedProblemByUser);
+problemsRoutes.get("/problems/solved/count", isAuthenticated, getSolvedProblemsCount);
+problemsRoutes.get("/problems/solved", isAuthenticated, getSolvedProblems);
+problemsRoutes.get("/problems/count", isAuthenticated, getProblemsCount);
+problemsRoutes.get("/problems", isAuthenticated, getAllProblems);
+problemsRoutes.get("/problems/:id", isAuthenticated, isAdmin, getProblemById);
 
 export default problemsRoutes;
