@@ -45,7 +45,38 @@ export const getSubmissionsForProblem = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "Submissions fetched successfully", submission));
 });
 
-export const getAllTheSubmissionsForProblem = asyncHandler(async (req, res) => {
+export const getSubmissionById = asyncHandler(async (req, res) => {
+  const { submissionId } = req.params;
+  const userId = req.userId;
+
+  const submission = await db.submission.findUnique({
+    where: {
+      id: submissionId,
+    },
+    include: {
+      problem: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          difficulty: true,
+          testcases: true,
+        },
+      },
+      testCases: true,
+    },
+  });
+
+  if (!submission) {
+    throw new ApiError(404, "Submission not found");
+  }
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Submission fetched!", { submission }));
+});
+
+export const getAllTheSubmissionsCountForProblem = asyncHandler(async (req, res) => {
   const problemId = req.params.problemId;
   const submission = await db.submission.count({
     where: {
@@ -62,6 +93,20 @@ export const getAllTheSubmissionsForProblem = asyncHandler(async (req, res) => {
   res.status(200).json(
     new ApiResponse(200, "Submissions fetched successfully", {
       count: submission,
+    })
+  );
+});
+
+export const getAllSubmissionCount = asyncHandler(async (req, res) => {
+  const submissionsCount = await db.submission.count({
+    where: {
+      userId: req.userId,
+    },
+  });
+
+  res.status(200).json(
+    new ApiResponse(200, "Submissions count fetched", {
+      count: submissionsCount,
     })
   );
 });
