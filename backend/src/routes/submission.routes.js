@@ -1,23 +1,35 @@
 import express from "express";
-import { verifyJWT } from "../middlewares/verifyJWT.js";
+import { isAuthenticated } from "../middlewares/auth.middleware.js";
 import {
+  getAllSubmissionCount,
   getAllSubmissions,
-  getAllTheSubmissionsForProblem,
+  getAllSubmissionsCountForProblem,
+  getSubmissionById,
   getSubmissionsForProblem,
 } from "../controllers/submissions.controller.js";
 
 const submissionRoutes = express.Router();
 
-submissionRoutes.get("/get-all-submissions", verifyJWT, getAllSubmissions);
+submissionRoutes.get("/submissions", isAuthenticated, getAllSubmissions);
 submissionRoutes.get(
-  "/get-submission/:problemId",
-  verifyJWT,
+  "/submissions/problem/:problemId",
+  isAuthenticated,
   getSubmissionsForProblem
 );
 submissionRoutes.get(
-  "/get-submissions-count/:problemId",
-  verifyJWT,
-  getAllTheSubmissionsForProblem
+  "/submissions/:submissionId",
+  isAuthenticated,
+  getSubmissionById
+);
+submissionRoutes.get(
+  "/submissions/count/:problemId",
+  isAuthenticated,
+  getAllSubmissionsCountForProblem
+);
+submissionRoutes.get(
+  "/submissions/count",
+  isAuthenticated,
+  getAllSubmissionCount
 );
 
 export default submissionRoutes;

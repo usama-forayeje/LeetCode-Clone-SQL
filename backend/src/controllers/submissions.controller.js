@@ -76,7 +76,7 @@ export const getSubmissionById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "Submission fetched!", { submission }));
 });
 
-export const getAllTheSubmissionsCountForProblem = asyncHandler(async (req, res) => {
+export const getAllSubmissionsCountForProblem = asyncHandler(async (req, res) => {
   const problemId = req.params.problemId;
   const submission = await db.submission.count({
     where: {
