@@ -17,6 +17,7 @@
     "nodemailer": "^6.10.1",
     "nodemon": "^3.1.10",
     "prettier": "^3.5.3",
+    "sslcommerz-lts": "^1.1.0",
     "winston": "^3.17.0"
   },
   "name": "backend",
