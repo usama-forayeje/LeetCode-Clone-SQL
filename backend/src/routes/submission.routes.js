@@ -17,9 +17,9 @@ submissionRoutes.get(
   getSubmissionsForProblem
 );
 submissionRoutes.get(
-  "/submissions/:submissionId",
+  "/submissions/count",
   isAuthenticated,
-  getSubmissionById
+  getAllSubmissionCount
 );
 submissionRoutes.get(
   "/submissions/count/:problemId",
@@ -27,9 +27,9 @@ submissionRoutes.get(
   getAllSubmissionsCountForProblem
 );
 submissionRoutes.get(
-  "/submissions/count",
+  "/submissions/:submissionId",
   isAuthenticated,
-  getAllSubmissionCount
+  getSubmissionById
 );
 
 export default submissionRoutes;

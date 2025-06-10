@@ -1,34 +1,27 @@
 import express from "express";
-import { verifyJWT } from "../middlewares/verifyJWT.js";
+import { isAuthenticated } from "../middlewares/auth.middleware.js";
 import {
-  addProblemToPlaylist,
+  addProblemInPlaylist,
   createPlaylist,
   deletePlaylist,
-  getAllPlaylist,
-  getPlaylistDetails,
+  getAllPlaylists,
+  getPlaylistById,
   removeProblemFromPlaylist,
+  updatePlaylist,
 } from "../controllers/playlists.controller.js";
 
 const playlistRoutes = express.Router();
 
-playlistRoutes.get("/", verifyJWT, getAllPlaylist);
+playlistRoutes.post("/create", isAuthenticated, createPlaylist);
 
-playlistRoutes.get("/:playlistId", verifyJWT, getPlaylistDetails);
+playlistRoutes.put("/:playlistId", isAuthenticated, updatePlaylist);
+playlistRoutes.delete("/:playlistId", isAuthenticated, deletePlaylist);
 
-playlistRoutes.post("/crate-playlist", verifyJWT, createPlaylist);
+playlistRoutes.get("/", isAuthenticated, getAllPlaylists);
+playlistRoutes.get("/:playlistId", isAuthenticated, getPlaylistById);
 
-playlistRoutes.post(
-  "/:playlistId/add-problem",
-  verifyJWT,
-  addProblemToPlaylist
-);
+playlistRoutes.post("/:playlistId/problems", isAuthenticated, addProblemInPlaylist);
+playlistRoutes.delete("/:playlistId/problems", isAuthenticated, removeProblemFromPlaylist);
 
-playlistRoutes.delete("/:playlistId", verifyJWT, deletePlaylist);
-
-playlistRoutes.delete(
-  "/remove-problem/:playlistId",
-  verifyJWT,
-  removeProblemFromPlaylist
-);
 
 export default playlistRoutes;

@@ -3,152 +3,215 @@ import asyncHandler from "../utils/async-handler.js";
 import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-errors.js";
 
-// @desc    Create a new playlist
 export const createPlaylist = asyncHandler(async (req, res) => {
   const { name, description } = req.body;
-  const userId = req.user.id;
 
-  const existing = await db.playlist.findFirst({
-    where: { name, userId },
-  });
-
-  if (existing) {
-    return res
-      .status(409)
-      .json(new ApiError(409, "You already have a playlist with this name"));
-  }
-
-  const playlist = await db.playlist.create({
+  const newPlaylist = await db.playlist.create({
     data: {
       name,
       description,
-      userId,
-    },
-  });
-
-  res
-    .status(201)
-    .json(new ApiResponse(201, "Playlist created successfully", playlist));
-});
-
-// @desc    Get all playlists for the logged-in user
-export const getAllPlaylist = asyncHandler(async (req, res) => {
-  const playlist = await db.playlist.findMany({
-    where: {
       userId: req.user.id,
     },
-    include: {
-      problems: {
-        include: {
-          problem: true,
-        },
-      },
-    },
   });
 
-  res
-    .status(200)
-    .json(new ApiResponse(200, "All playlists fetched successfully", playlist));
-});
-
-// @desc    Get a specific playlist by ID
-export const getPlaylistDetails = asyncHandler(async (req, res) => {
-  const { playlistId } = req.params;
-
-  const playlist = await db.playlist.findFirst({
-    where: {
-      id: playlistId,
-      userId: req.user.id,
-    },
-    include: {
-      problems: {
-        include: {
-          problem: true,
-        },
-      },
-    },
-  });
-
-  if (!playlist) {
-    return res.status(404).json(new ApiError(404, "Playlist not found"));
+  if (!newPlaylist) {
+    throw new ApiError(403, "Failed to create playlist");
   }
 
-  res
-    .status(200)
-    .json(new ApiResponse(200, "Playlist details fetched successfully", playlist));
+  res.status(201).json(
+    new ApiResponse(201, "Playlist created successfully", {
+      playlist: newPlaylist,
+    })
+  );
 });
 
-// @desc    Add problems to a playlist
-export const addProblemToPlaylist = asyncHandler(async (req, res) => {
+export const updatePlaylist = asyncHandler(async (req, res) => {
   const { playlistId } = req.params;
-  const { problemIds } = req.body;
-
-  if (!Array.isArray(problemIds) || problemIds.length === 0) {
-    return res
-      .status(400)
-      .json(new ApiError(400, "Invalid or missing problemIds"));
+  const { name, description } = req.body;
+  if (!playlistId) {
+    throw new ApiError(400, "playlistId is required");
   }
 
-  const playlistProblem = await db.playlistProblem.createMany({
-    data: problemIds.map((problemId) => ({
-      playlistId,
-      problemId,
-    })),
+  const existing = await db.playlist.findFirst({
+    where: { id: playlistId, userId: req.user.id },
   });
 
-  res
-    .status(201)
-    .json(new ApiResponse(201, "Problems added to playlist successfully", playlistProblem));
+  if (!existing) {
+    throw new ApiError(404, "Playlist not found or access denied");
+  }
+
+  const updatedPlaylist = await db.playlist.update({
+    where: { id: playlistId },
+    data: {
+      name,
+      description: description || null,
+    },
+  });
+
+  res.status(200).json(
+    new ApiResponse(200, "Playlist updated successfully", {
+      playlist: updatedPlaylist,
+    })
+  );
 });
 
-// @desc    Delete a playlist
 export const deletePlaylist = asyncHandler(async (req, res) => {
   const { playlistId } = req.params;
+  if (!playlistId) {
+    throw new ApiError(400, "playlistId is required");
+  }
 
+  const exists = await db.playlist.findFirst({
+    where: { id: playlistId, userId: req.user.id },
+  });
+
+  if (!exists) {
+    throw new ApiError(404, "Playlist not found");
+  }
+
+  await db.playlist.delete({
+    where: { id: playlistId },
+  });
+
+  res.status(200).json(new ApiResponse(200, "Playlist delete successfully"));
+});
+
+export const getAllPlaylists = asyncHandler(async (req, res) => {
+  const playlists = await db.playlist.findMany({
+    where: {
+      userId: req.user.id,
+    },
+    include: {
+      problems: {
+        include: {
+          problem: true,
+        },
+      },
+    },
+  });
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, "Playlists fetched successfully", { playlists })
+    );
+});
+
+export const getPlaylistById = asyncHandler(async (req, res) => {
+  const { playlistId } = req.params;
+  if (!playlistId) {
+    throw new ApiError(400, "playlistId is required");
+  }
   const playlist = await db.playlist.findFirst({
     where: {
       id: playlistId,
       userId: req.user.id,
     },
-  });
-
-  if (!playlist) {
-    return res.status(404).json(new ApiError(404, "Playlist not found"));
-  }
-
-  const deleted = await db.playlist.delete({
-    where: {
-      id: playlistId,
+    include: {
+      problems: {
+        include: {
+          problem: {
+            include: {
+              solvedBy: true,
+            },
+          },
+        },
+      },
     },
   });
 
+  if (!playlist) {
+    throw new ApiError(404, "No playlist found");
+  }
+
   res
     .status(200)
-    .json(new ApiResponse(200, "Playlist deleted successfully", deleted));
+    .json(new ApiResponse(200, "Playlists fetched successfully", { playlist }));
 });
 
-// @desc    Remove problems from a playlist
+export const addProblemInPlaylist = asyncHandler(async (req, res) => {
+  const { playlistId } = req.params;
+  const { problemIds } = req.body;
+  if (!Array.isArray(problemIds) || problemIds.length == 0) {
+    throw new ApiError(400, "problemIds are required and cannot be empty");
+  }
+  if (!playlistId) {
+    throw new ApiError(400, "playlistId is required");
+  }
+
+  const problems = await db.problem.findMany({
+    where: {
+      id: {
+        in: problemIds,
+      },
+    },
+  });
+
+  if (!problems || problems.length == 0) {
+    throw new ApiError(404, "No valid problems found with the provided IDs");
+  }
+
+  const problemsInPlaylist = await db.problemInPlaylist.createMany({
+    data: problemIds.map((id) => ({
+      playlistId,
+      problemId: id,
+    })),
+    skipDuplicates: true,
+  });
+
+  if (!problemsInPlaylist) {
+    throw new ApiError(500, "Failed to add problems to the playlist");
+  }
+
+  res.status(200).json(
+    new ApiResponse(200, "Problems added to playlist successfully", {
+      addedCount: problemsInPlaylist.count,
+    })
+  );
+});
+
 export const removeProblemFromPlaylist = asyncHandler(async (req, res) => {
   const { playlistId } = req.params;
   const { problemIds } = req.body;
-
-  if (!playlistId || !Array.isArray(problemIds) || problemIds.length === 0) {
-    return res
-      .status(400)
-      .json(new ApiError(400, "Invalid playlistId or problemIds"));
+  if (!Array.isArray(problemIds) || problemIds.length == 0) {
+    throw new ApiError(400, "problemIds are required and cannot be empty");
+  }
+  if (!playlistId) {
+    throw new ApiError(400, "playlistId is required");
   }
 
-  const deleted = await db.playlistProblem.deleteMany({
+  const problems = await db.problem.findMany({
     where: {
-      playlistId,
+      id: {
+        in: problemIds,
+      },
+    },
+  });
+
+  if (!problems || problems.length == 0) {
+    throw new ApiError(404, "No valid problems found with the provided IDs");
+  }
+
+  const problemsInPlaylistExist = await db.problemInPlaylist.findMany({
+    where: {
+      playlistId: playlistId,
       problemId: {
         in: problemIds,
       },
     },
   });
 
-  res
-    .status(200)
-    .json(new ApiResponse(200, "Problems removed from playlist successfully", deleted));
-});
+  if (!problemsInPlaylistExist || problemsInPlaylistExist.length === 0) {
+    throw new ApiError(404, "No matching problems found in the playlist");
+  }
 
+  await db.problemInPlaylist.deleteMany({
+    where: {
+      playlistId: playlistId,
+      problemId: {
+        in: problemIds,
+      },
+    },
+  });
+
+  res.status(200).json(new ApiResponse(200, "Problem removed successfully"));
+});
