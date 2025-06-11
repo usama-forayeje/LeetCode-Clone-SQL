@@ -11,7 +11,7 @@ import healthRoute from "./routes/healthCheck.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import userRoute from "./routes/user.routes.js";
 import sheetRoutes from "./routes/sheet.routes.js";
-import purchaseRoutes from "./routes/purchase.routes.js";
+import paymentRoutes from "./routes/payment.routes.js";
 
 const app = express();
 
@@ -38,7 +38,7 @@ app.use("/api/v1/execute", executeRoute);
 app.use("/api/v1/submission", submissionRoutes);
 app.use("/api/v1/playlist", playlistRoutes);
 app.use("/api/v1/sheet", sheetRoutes);
-app.use("/api/v1/purchase", purchaseRoutes);
+app.use("/api/v1/payment", paymentRoutes);
 app.use("/api/v1/health", healthRoute);
 
 export default app;
