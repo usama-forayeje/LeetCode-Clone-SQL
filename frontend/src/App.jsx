@@ -1,9 +1,8 @@
-
-import { Button } from './components/ui/button'
-import { useGetUserQuery } from './querys/useUserQuery';
+import { useCurrentUser } from './querys/auth';
+import AppRouter from './routers/AppRouter';
 
 function App() {
-   const { data, isLoading, isError, error } = useGetUserQuery({
+  const { data, isLoading, isError, error } = useCurrentUser({
     onError: (err) => {
       console.log(err);
       if (err.response?.status === 401) {
@@ -13,11 +12,20 @@ function App() {
   });
   const user = data?.user;
   console.log(user);
-  
+
+  if (isLoading) {
+    return (
+      <div className="w-full flex items-center flex-col justify-center h-screen">
+        <span className="loading loading-bars loading-xl"></span>
+      </div>
+    );
+  }
+
   return (
-    <><h1>Usama Anjuman</h1>
-    <Button>Click me</Button>
+    <>
+      <AppRouter />
     </>
+
   )
 }
 
