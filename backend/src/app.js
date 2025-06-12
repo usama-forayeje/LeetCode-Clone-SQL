@@ -1,6 +1,7 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import dotenv from "dotenv";
 import { errorHandler } from "./middlewares/errorHandler.middleware.js";
 import authRoutes from "./routes/auth.routes.js";
 import problemsRoutes from "./routes/problem.routes.js";
@@ -13,6 +14,8 @@ import userRoute from "./routes/user.routes.js";
 import sheetRoutes from "./routes/sheet.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
 
+dotenv.config();
+
 const app = express();
 
 app.use(cookieParser());
@@ -22,22 +25,21 @@ app.use(errorHandler);
 
 app.use(
   cors({
-    origin: "localhost:8000",
+    origin: [process.env.FRONTEND_BASE_URL, "https://localhost:5173"],
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Accept"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     exposedHeaders: ["Set-Cookie", "*"],
   })
 );
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/admin", adminRoutes);
-app.use("/api/v1/user", userRoute);
-app.use("/api/v1/problem", problemsRoutes);
-app.use("/api/v1/execute", executeRoute);
-app.use("/api/v1/submission", submissionRoutes);
-app.use("/api/v1/playlist", playlistRoutes);
-app.use("/api/v1/sheet", sheetRoutes);
+app.use("/api/v1/users", userRoute);
+app.use("/api/v1/problems", problemsRoutes);
+app.use("/api/v1/executes", executeRoute);
+app.use("/api/v1/submissions", submissionRoutes);
+app.use("/api/v1/playlists", playlistRoutes);
+app.use("/api/v1/sheets", sheetRoutes);
 app.use("/api/v1/payment", paymentRoutes);
 app.use("/api/v1/health", healthRoute);
 

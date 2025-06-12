@@ -1,0 +1,55 @@
+export const THEMES = [
+  "light",
+  "dark",
+  "cupcake",
+  "bumblebee",
+  "emerald",
+  "corporate",
+  "synthwave",
+  "retro",
+  "cyberpunk",
+  "valentine",
+  "halloween",
+  "garden",
+  "forest",
+  "aqua",
+  "lofi",
+  "pastel",
+  "fantasy",
+  "wireframe",
+  "black",
+  "luxury",
+  "dracula",
+  "cmyk",
+  "autumn",
+  "business",
+  "acid",
+  "lemonade",
+  "night",
+  "coffee",
+  "winter",
+  "dim",
+  "nord",
+  "sunset",
+];
+
+export const LANGUAGES = [
+  "JAVA",
+  "JAVASCRIPT",
+  "PYTHON",
+  "C",
+  "C++",
+  "TYPESCRIPT",
+];
+
+export const MENU_ITEMS = [
+  { name: "Home", path: "/" },
+  { name: "About", path: "/about" },
+  { name: "Contact", path: "/contact" },
+];
+export const PROFILE_MENU = [
+  { name: "View Profile", path: "/profile" },
+  { name: "Edit Profile", path: "/profile/edit" },
+  { name: "Settings", path: "/profile/settings" },
+  { name: "Logout", path: "/logout" },
+];
