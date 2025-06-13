@@ -1,30 +1,25 @@
-import { useCurrentUser } from './querys/auth';
+import AdminLayout from './components/layouts/AdminLayout';
+import AuthLayout from './components/layouts/AuthLayout';
+import MainLayout from './components/layouts/MainLayout';
 import AppRouter from './routers/AppRouter';
 
-function App() {
-  const { data, isLoading, isError, error } = useCurrentUser({
-    onError: (err) => {
-      console.log(err);
-      if (err.response?.status === 401) {
-        window.location.href = "/login";
-      }
-    },
-  });
-  const user = data?.user;
-  console.log(user);
+const layoutMap = {
+  '/login': AuthLayout,
+  '/register': AuthLayout,
+  '/admin': AdminLayout,
+  default: MainLayout,
+};
 
-  if (isLoading) {
-    return (
-      <div className="w-full flex items-center flex-col justify-center h-screen">
-        <span className="loading loading-bars loading-xl"></span>
-      </div>
-    );
-  }
+function App() {
+
+  const Layout = Object.entries(layoutMap).find(([path]) =>
+    location.pathname.startsWith(path)
+  )?.[1] || layoutMap.default;
 
   return (
-    <>
-      <AppRouter />
-    </>
+
+    <AppRouter />
+
 
   )
 }

@@ -2,7 +2,6 @@ import asyncHandler from "../utils/async-handler.js";
 import { db } from "../../config/db.js";
 import { ApiError } from "../utils/api-errors.js";
 import bcrypt from "bcryptjs";
-import axios from "axios";
 import crypto from "crypto";
 import {
   sendMail,
@@ -423,101 +422,64 @@ export const changePassword = asyncHandler(async (req, res) => {
     );
 });
 
+
 export const googleAuth = asyncHandler(async (req, res) => {
-  // 1. Extract authorization code from request
-  // 2. Exchange authorization code for access & refresh tokens
-  // 3. Fetch user's Google profile information
-  // 4. Check if user already exists in DB
-  // 5. If user does not exist, create a new user
-  // 6. Generate JWT tokens and set cookies
-  // 7. Store refresh token in DB
-  // 8. Handle cases where account exists but isn't verified
-  // 9. If user exists but not a Google-authenticated account
-  // 10. Generate tokens for existing Google-authenticated user
-  // 11. Update refresh token in DB
-  // 12. Respond with user and tokens
-  const { code } = req.body;
+  const { token } = req.body;
 
-  const googleRes = await oauth2Client.getToken(code);
-  oauth2Client.setCredentials(googleRes.tokens);
+  // 1. Validate input
+  if (!token || typeof token !== "string") {
+    throw new ApiError(400, "Invalid Google ID token");
+  }
 
-  const userInfo = await axios.get(
-    `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${googleRes.tokens.access_token}`
-  );
-
-  const { email, name: fullname, picture } = userInfo.data;
-  console.log("Google User Info:", userInfo.data);
-
-  const existUser = await db.user.findFirst({
-    where: { email },
-  });
-
-  if (!existUser) {
-    const newUser = await db.user.create({
-      data: {
-        fullname,
-        email,
-        isEmailVerified: true,
-        isGoogleAuth: true,
-        profileImage: picture,
-      },
+  try {
+    // 3. Verify ID token
+    const ticket = await oauth2Client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_AUTH_CLIENT_ID,
     });
 
-    const { accessToken, refreshToken } =
-      generateJWTTokens.generateAccessAndRefreshTokenAndSetCookie(newUser, res);
+    const payload = ticket.getPayload();
+    const { email, name: fullname, picture } = payload;
 
-    const updatedUser = await db.user.update({
-      where: { id: newUser.id },
-      data: { refreshToken },
-      select: {
-        email: true,
-        fullname: true,
-        profileImage: true,
-        isEmailVerified: true,
-        isGoogleAuth: true,
-      },
-    });
+    if (!email) {
+      throw new ApiError(400, "Google authentication failed - no email found");
+    }
 
-    return res.status(200).json(
-      new ApiResponse(200, "Login successful", {
-        user: updatedUser,
-        accessToken,
-        refreshToken,
-      })
-    );
+    // 4. Check existing user
+    const existingUser = await db.user.findUnique({ where: { email } });
+
+    // 5. Handle new users
+    if (!existingUser) {
+      // Create new user
+      const newUser = await db.user.create({
+        data: {
+          email,
+          fullname,
+          profileImage: picture,
+          isEmailVerified: true,
+          isGoogleAuth: true,
+        },
+      });
+      const { accessToken, refreshToken } =
+        generateJWTTokens.generateAccessAndRefreshTokenAndSetCookie(
+          newUser,
+          res
+        );
+
+      return res.status(200).json(
+        new ApiResponse(200, "Registration successful", {
+          user: {
+            email: newUser.email,
+            fullname: newUser.fullname,
+            profileImage: newUser.profileImage,
+            isEmailVerified: newUser.isEmailVerified,
+          },
+          accessToken,
+        })
+      );
+    }
+  } catch (error) {
+    console.error(error);
+    throw new ApiError(500, "Google authentication failed");
   }
-
-  if (!existUser.isEmailVerified) {
-    throw new ApiError(400, "Email is not verified. Please verify your email.");
-  }
-
-  if (!existUser.isGoogleAuth) {
-    throw new ApiError(
-      400,
-      "An account with this email exists but isn't linked to Google. Please log in with email/password."
-    );
-  }
-
-  const { accessToken, refreshToken } =
-    generateJWTTokens.generateAccessAndRefreshTokenAndSetCookie(existUser, res);
-
-  const updatedUser = await db.user.update({
-    where: { id: existUser.id },
-    data: { refreshToken },
-    select: {
-      email: true,
-      fullname: true,
-      profileImage: true,
-      isEmailVerified: true,
-      isGoogleAuth: true,
-    },
-  });
-
-  res.status(200).json(
-    new ApiResponse(200, "Login successful", {
-      user: updatedUser,
-      accessToken,
-      refreshToken,
-    })
-  );
 });

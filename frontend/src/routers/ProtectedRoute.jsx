@@ -2,13 +2,15 @@ import { useCurrentUser } from '@/querys/auth';
 import React from 'react'
 import { Navigate } from 'react-router';
 
-function ProtectedRoute({ children }) {
-  const { user } = useCurrentUser();
-  return (
+function ProtectedRoute() {
+  const { data: user, isLoading } = useCurrentUser();
 
-    user ? children : <Navigate to="/login" replace />
+  if (isLoading) return <div>Loading...</div>;
+  console.log(user);
 
-  )
+  if (!user) return <Navigate to="/login" replace />;
+
+  return <Outlet />;
 }
 
 export default ProtectedRoute
