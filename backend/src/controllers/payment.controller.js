@@ -181,19 +181,40 @@ export const initiatePayment = asyncHandler(async (req, res) => {
 });
 
 export const handlePaymentCallback = asyncHandler(async (req, res) => {
-  const { gateway } = req.params;
-  const payload = gateway === "RAZORPAY" ? req.body : req.query;
+  // Detect gateway from URL or params
+  let gateway = req.params.gateway;
+  
+  // If gateway not in params, detect from URL path
+  if (!gateway) {
+    const path = req.path;
+    if (path.includes('bkash')) gateway = 'BKASH';
+    else if (path.includes('sslcommerz')) gateway = 'SSLCOMMERZ';
+    else if (path.includes('razorpay')) gateway = 'RAZORPAY';
+    else throw new ApiError(400, "Gateway not detected");
+  }
 
+  // Get payload based on gateway
+  const payload = gateway === 'RAZORPAY' ? req.body : req.query;
+
+  // Verify payment
   const verification = await PaymentService.verifyPayment(
     gateway.toUpperCase(),
-    { ...payload, userId: req.userId }
+    payload
   );
+
+  // Extract user ID and sheet ID from verification metadata
+  const userId = verification.metadata.userId || payload.value_b;
+  const sheetId = verification.metadata.sheetId || payload.value_a;
+
+  if (!userId || !sheetId) {
+    throw new ApiError(400, "Missing user ID or sheet ID in payment callback");
+  }
 
   // Record purchase
   const purchase = await db.purchase.create({
     data: {
-      userId: verification.metadata.userId || req.userId,
-      sheetId: verification.metadata.sheetId || req.body.sheetId,
+      userId: userId,
+      sheetId: sheetId,
     },
   });
 
@@ -211,6 +232,10 @@ export const handlePaymentCallback = asyncHandler(async (req, res) => {
     },
   });
 
-  res.redirect(`${process.env.FRONTEND_BASE_URL}/payment/success`);
+  // Redirect based on gateway
+  if (req.path.includes('fail') || req.path.includes('cancel')) {
+    res.redirect(`${process.env.FRONTEND_BASE_URL}/payment/failed`);
+  } else {
+    res.redirect(`${process.env.FRONTEND_BASE_URL}/payment/success`);
+  }
 });
-

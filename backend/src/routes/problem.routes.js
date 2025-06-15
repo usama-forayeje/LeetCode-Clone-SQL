@@ -18,10 +18,10 @@ problemsRoutes.post("/create", isAuthenticated, isAdmin, createProblem);
 problemsRoutes.put("/:id", isAuthenticated, isAdmin, updateProblem);
 problemsRoutes.delete("/:id", isAuthenticated, isAdmin, deleteProblem);
 
-problemsRoutes.get("/problems/solved/count", isAuthenticated, getSolvedProblemsCount);
-problemsRoutes.get("/problems/solved", isAuthenticated, getSolvedProblems);
-problemsRoutes.get("/problems/count", isAuthenticated, getProblemsCount);
-problemsRoutes.get("/problems", isAuthenticated, getAllProblems);
-problemsRoutes.get("/problems/:id", isAuthenticated, isAdmin, getProblemById);
+problemsRoutes.get("/solved/count", isAuthenticated, getSolvedProblemsCount);
+problemsRoutes.get("/solved", isAuthenticated, getSolvedProblems);
+problemsRoutes.get("/count", isAuthenticated, getProblemsCount);
+problemsRoutes.get("/", isAuthenticated, getAllProblems);
+problemsRoutes.get("/:id", isAuthenticated, isAdmin, getProblemById);
 
 export default problemsRoutes;

@@ -16,6 +16,7 @@
     "multer": "^1.4.5-lts.2",
     "nodemailer": "^6.10.1",
     "nodemon": "^3.1.10",
+    "path-to-regexp": "^6.2.1",
     "prettier": "^3.5.3",
     "razorpay": "^2.9.6",
     "sslcommerz-lts": "^1.1.0",

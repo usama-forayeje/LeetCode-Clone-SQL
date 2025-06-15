@@ -1,24 +1,26 @@
-
-import { Link } from 'react-router';
+import { Link, Navigate, useNavigate } from 'react-router';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
+import { useGoogleAuth, useSignUp } from '@/querys/auth';
+import { signUpSchema } from '@/schemas/auth';
 
 // Components
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useGoogleAuth, useSignUp } from '@/querys/auth';
-import { signUpSchema } from '@/schemas/auth';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { GoogleLogo } from '@/components/icons';
 
 function RegisterPage() {
   const { mutate: signUp, isPending } = useSignUp();
-  const { mutate: googleAuth, isPending: isGooglePending } = useGoogleAuth();
+  const { mutate: googleAuth } = useGoogleAuth();
+  const navigate = useNavigate();
+
 
   const form = useForm({
-
+    resetMode: "onSubmit",
     resolver: zodResolver(signUpSchema),
     defaultValues: {
       name: "",
@@ -30,14 +32,14 @@ function RegisterPage() {
 
   const onSubmit = (data) => {
     signUp(data);
+    navigate("/verify-email", { state: { email: data.email } });
   };
 
-  const handleGoogleSignIn = () => {
-    // This would typically open a Google popup or redirect
-    // For demo, we'll simulate getting a token
-    googleAuth("google-auth-token");
+  const handleGoogleSuccess = (credentialResponse) => {
+    googleAuth(credentialResponse.credential, {
+      onSuccess: () => navigate("/dashboard"),
+    });
   };
-
   return (
     <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-background">
       <Card className="w-full max-w-md shadow-lg rounded-2xl border border-border">
@@ -125,19 +127,22 @@ function RegisterPage() {
             </div>
           </div>
 
-          <Button
-            variant="outline"
-            className="w-full flex items-center justify-center"
-            onClick={handleGoogleSignIn}
-            disabled={isPending || isGooglePending}
-          >
-            {isGooglePending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <GoogleLogo className="mr-2 h-4 w-4" />
-            )}
-            Continue with Google
-          </Button>
+          <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+            <GoogleLogin
+              onSuccess={(credentialResponse) => {
+                googleAuth(credentialResponse.credential, {
+                  onSuccess: () => navigate("/dashboard"),
+                  onError: (error) => toast.error("Google login failed"),
+                });
+              }}
+              onError={() => toast.error("Google login failed")}
+              useOneTap
+              text="continue_with"
+              shape="rectangular"
+              size="large"
+              width="100%"
+            />
+          </GoogleOAuthProvider>
 
           <div className="text-center text-sm">
             Already have an account?{' '}

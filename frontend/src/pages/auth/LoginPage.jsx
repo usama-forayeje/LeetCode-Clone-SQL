@@ -14,15 +14,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { signInSchema } from "@/schemas/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
-import { Link } from "react-router";
-import { GoogleLogo } from "@/components/icons";
+import { Link, Navigate, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 
 function LoginPage() {
   const { mutate: signIn, isPending } = useSignIn();
   const { mutate: googleAuth, isPending: isGooglePending } = useGoogleAuth();
-
+  const navigate = useNavigate();
   const form = useForm({
     resolver: zodResolver(signInSchema),
     defaultValues: {
@@ -33,10 +32,13 @@ function LoginPage() {
 
   const onSubmit = (data) => {
     signIn(data);
+    navigate("/dashboard");
   };
 
   const handleGoogleSuccess = (credentialResponse) => {
-    googleAuth(credentialResponse.credential);
+    googleAuth(credentialResponse.credential, {
+      onSuccess: () => navigate("/dashboard"),
+    });
   };
 
   return (
@@ -47,17 +49,22 @@ function LoginPage() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4">
-            <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => toast.error("Google authentication failed")}
-                useOneTap
-                text="continue_with"
-                shape="rectangular"
-                size="large"
-                width="100%"
-              />
-            </GoogleOAuthProvider>
+           <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+            <GoogleLogin
+              onSuccess={(credentialResponse) => {
+                googleAuth(credentialResponse.credential, {
+                  onSuccess: () => navigate("/dashboard"),
+                  onError: (error) => toast.error("Google login failed"),
+                });
+              }}
+              onError={() => toast.error("Google login failed")}
+              useOneTap
+              text="continue_with"
+              shape="rectangular"
+              size="large"
+              width="100%"
+            />
+          </GoogleOAuthProvider>
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
