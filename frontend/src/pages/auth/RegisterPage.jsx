@@ -1,4 +1,4 @@
-import { Link } from "react-router"
+import { Link, Navigate } from "react-router"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { motion } from "framer-motion"
@@ -6,7 +6,6 @@ import { Loader2, Eye, EyeOff, CheckCircle, XCircle } from "lucide-react"
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google"
 import { useGoogleAuth, useSignUp } from "@/querys/auth"
 import { signUpSchema } from "@/schemas/auth"
-import { useState } from "react"
 
 // Components
 import { Button } from "@/components/ui/button"
@@ -14,12 +13,39 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Separator } from "@/components/ui/separator"
+import { toast } from "sonner"
+import { useState } from "react"
 
 function RegisterPage() {
-  const { mutate: signUp, isPending } = useSignUp()
-  const { mutate: googleAuth } = useGoogleAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const { mutate: signUp, isPending } = useSignUp({
+    onSuccess: () => {
+      toast.success("Account created successfully. Please login.");
+      Navigate("/login");
+    },
+    onError: (error) => {
+      const backendErrors = error.response?.data?.errors;
+      if (backendErrors && Array.isArray(backendErrors)) {
+        backendErrors.forEach(err => {
+          if (err.path && err.path[0]) {
+            form.setError(err.path[0], {
+              type: "server",
+              message: err.message,
+            });
+          }
+        });
+      } else {
+        toast.error(error.response?.data?.message || "Registration failed");
+      }
+    },
+  });
+  const { mutate: googleAuth } = useGoogleAuth({
+    onError: (error) => {
+      toast.error(error.response?.data?.message || "Google registration failed");
+    }
+  });
+
 
   const form = useForm({
     resolver: zodResolver(signUpSchema),
@@ -41,8 +67,8 @@ function RegisterPage() {
   ]
 
   const onSubmit = (data) => {
-    signUp(data)
-  }
+    signUp(data);
+  };
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
@@ -64,7 +90,7 @@ function RegisterPage() {
                 onSuccess={(credentialResponse) => {
                   googleAuth(credentialResponse.credential)
                 }}
-                onError={() => {}}
+                onError={() => { }}
                 useOneTap={false}
                 text="signup_with"
                 shape="rectangular"
@@ -85,7 +111,8 @@ function RegisterPage() {
           </div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Using the onSubmit prop on the Form component is preferred */}
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
                 name="fullname"
@@ -139,6 +166,7 @@ function RegisterPage() {
                         </Button>
                       </div>
                     </FormControl>
+                    {/* Displaying password requirements */}
                     {password && (
                       <div className="space-y-2 mt-2">
                         {passwordRequirements.map((req, index) => (
@@ -148,7 +176,9 @@ function RegisterPage() {
                             ) : (
                               <XCircle className="h-4 w-4 text-muted-foreground" />
                             )}
-                            <span className={req.met ? "text-green-600" : "text-muted-foreground"}>{req.label}</span>
+                            <span className={req.met ? "text-green-600" : "text-muted-foreground"}>
+                              {req.label}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -183,6 +213,7 @@ function RegisterPage() {
                         </Button>
                       </div>
                     </FormControl>
+                    {/* Displaying password match status */}
                     {confirmPassword && password && (
                       <div className="flex items-center space-x-2 text-sm mt-2">
                         {password === confirmPassword ? (
@@ -204,13 +235,18 @@ function RegisterPage() {
               />
 
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button type="submit" className="w-full h-11 text-base font-medium" disabled={isPending}>
+                <Button
+                  type="submit" // Changed to type="submit"
+                  className="w-full cursor-pointer h-11 text-base font-medium"
+                  disabled={isPending} // Disable button when pending
+                >
                   {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Create Account
+                  {isPending ? "Creating Account..." : "Create Account"} {/* Conditional text */}
                 </Button>
               </motion.div>
             </form>
           </Form>
+
 
           <div className="text-center text-sm">
             Already have an account?{" "}

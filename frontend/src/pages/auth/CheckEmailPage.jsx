@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { useLocation, useNavigate } from "react-router"
 import { motion } from "framer-motion"

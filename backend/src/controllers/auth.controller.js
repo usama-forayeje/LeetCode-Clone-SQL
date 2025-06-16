@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import jwt from "jsonwebtoken"; // Import jwt to fix the undeclared variable error
+import jwt from "jsonwebtoken"; 
 import { db } from "../../config/db.js";
 import { logger } from "../libs/logger.js";
 import { ApiError } from "../utils/api-errors.js";
@@ -13,44 +13,78 @@ import {
   verificationMailGenContent,
 } from "../utils/mail.js";
 import { generateJWTTokens, generateTemporaryToken } from "../utils/token.js";
+import { changePasswordSchema, forgotPasswordSchema, googleAuthSchema, resetPasswordSchema, signInSchema, signUpSchema } from "../schemas/auth.schema.js";
 
 const hashPassword = async (password) => {
   return await bcrypt.hash(password, 12);
 };
 
+const generateAndSetTokens = (user, res) => {
+  const { accessToken, refreshToken } =
+    generateJWTTokens.generateAccessAndRefreshTokenAndSetCookie(user, res);
+  return { accessToken, refreshToken };
+};
+
 export const signUp = asyncHandler(async (req, res) => {
-  const { fullname, email, password } = req.body;
+  // Validate request body against schema
+  const { fullname, email, password } = signUpSchema.parse(req.body);
 
-  if (!fullname || !email || !password) {
-    throw new ApiError(400, "All fields are required");
-  }
+  // Check if user already exists
+  let user = await db.user.findUnique({ where: { email } });
 
-  if (password.length < 6) {
-    throw new ApiError(400, "Password must be at least 6 characters");
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    throw new ApiError(400, "Invalid email format");
-  }
-
-  const existingUser = await db.user.findUnique({ where: { email } });
-
-  if (existingUser && existingUser.isEmailVerified) {
-    throw new ApiError(400, "User with this email already exists");
-  }
-
-  if (existingUser && !existingUser.isEmailVerified) {
+  if (user) {
+    if (user.isEmailVerified) {
+      throw new ApiError(400, "User with this email already exists.");
+    }
+    // If user exists but email is not verified, and the token is not expired,
+    // prevent new registration and ask to verify existing email.
     const isTokenExpired =
-      new Date(existingUser.emailVerificationExpiry).getTime() < Date.now();
+      new Date(user.emailVerificationExpiry).getTime() < Date.now();
 
     if (!isTokenExpired) {
-      throw new ApiError(400, "Email not verified. Please verify your email.");
+      throw new ApiError(
+        400,
+        "Email not verified. Please verify your email with the link sent earlier."
+      );
     }
+    // If token is expired, update the existing user's details and resend verification
+    const { hashedToken, unHashedToken, tokenExpiry } = generateTemporaryToken();
+    const hashedPassword = await hashPassword(password);
 
-    await db.user.delete({ where: { email } });
+    user = await db.user.update({
+      where: { email },
+      data: {
+        fullname,
+        password: hashedPassword,
+        emailVerificationToken: hashedToken,
+        emailVerificationExpiry: tokenExpiry,
+        lastVerificationEmailSentAt: new Date(),
+      },
+    });
+
+    const mailContent = await verificationMailGenContent(
+      fullname,
+      `${process.env.FRONTEND_BASE_URL}/verify-email/${unHashedToken}`
+    );
+
+    await sendMail({
+      email,
+      subject: "Verify your email!",
+      mailgenContent: mailContent,
+    });
+
+    return res
+      .status(200) // Changed to 200 as it's an update/resend scenario
+      .json(
+        new ApiResponse(
+          200,
+          "User account updated. Please verify your email with the new link.",
+          { email }
+        )
+      );
   }
 
+  // Create a new user if no existing unverified user is found or if token was expired
   const { hashedToken, unHashedToken, tokenExpiry } = generateTemporaryToken();
   const hashedPassword = await hashPassword(password);
 
@@ -61,11 +95,12 @@ export const signUp = asyncHandler(async (req, res) => {
       password: hashedPassword,
       emailVerificationToken: hashedToken,
       emailVerificationExpiry: tokenExpiry,
+      lastVerificationEmailSentAt: new Date(), 
     },
   });
 
   if (!newUser) {
-    throw new ApiError(401, "Error while creating new user");
+    throw new ApiError(500, "Error while creating new user.");
   }
 
   const mailContent = await verificationMailGenContent(
@@ -92,53 +127,62 @@ export const signUp = asyncHandler(async (req, res) => {
 
 export const verifyEmail = asyncHandler(async (req, res) => {
   const { token } = req.params;
-  if (!token) throw new ApiError(400, "Token is required!");
 
+  // 1. Token Validation: Basic check for token presence
+  if (!token) {
+    throw new ApiError(400, "Verification token is required.");
+  }
+
+  // 2. Hash the incoming token for comparison with stored hashed token
   const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
-  const user = await db.user.findFirst({
+  // 3. Find the user with the matching token and ensure it's not expired
+  let user = await db.user.findFirst({
     where: {
       emailVerificationToken: hashedToken,
-      emailVerificationExpiry: { gt: new Date() },
+      emailVerificationExpiry: { gt: new Date() }, 
     },
   });
 
-  if (!user) throw new ApiError(400, "Token is invalid or expired!");
-  if (user.isEmailVerified)
-    throw new ApiError(400, "Email is already verified");
+  // 4. Handle cases where no user is found or token is invalid/expired
+  if (!user) {
+    throw new ApiError(400, "Verification link is invalid or has expired. Please request a new one.");
+  }
 
-  const updatedUser = await db.user.update({
+  // 5. Prevent re-verification if email is already verified
+  if (user.isEmailVerified) {
+    throw new ApiError(400, "Email is already verified. You can now log in.");
+  }
+
+  // 6. Update user's verification status and clear verification tokens
+  const { accessToken, refreshToken } = generateAndSetTokens(user, res); // Generate new tokens and set cookies
+
+  // 7. Perform a single database update for user status and refresh token
+  const verifiedUser = await db.user.update({
     where: { id: user.id },
     data: {
       isEmailVerified: true,
       emailVerificationToken: null,
       emailVerificationExpiry: null,
+      refreshToken: refreshToken, // Update the user's refresh token in DB
     },
-  });
-
-  const { accessToken, refreshToken } =
-    generateJWTTokens.generateAccessAndRefreshTokenAndSetCookie(
-      updatedUser,
-      res
-    );
-
-  const verifiedUser = await db.user.update({
-    where: { id: user.id },
-    data: { refreshToken },
     select: {
+      // Select only necessary fields for the response
       id: true,
       fullname: true,
       email: true,
       isEmailVerified: true,
       role: true,
+      profileImage: true,
+      lastLoginAt: true, 
     },
   });
 
+  // 8. Send success response with user data and access token
   return res.status(200).json(
-    new ApiResponse(200, "Email verified successfully!", {
+    new ApiResponse(200, "Email verified successfully! You are now logged in.", {
       user: verifiedUser,
       accessToken,
-      refreshToken,
     })
   );
 });
@@ -146,19 +190,27 @@ export const verifyEmail = asyncHandler(async (req, res) => {
 export const resendVerificationEmail = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
-  const user = await db.user.findUnique({ where: { email } });
-  if (!user) throw new ApiError(404, "User not found");
-
-  if (user.isEmailVerified) {
-    throw new ApiError(400, "Email already verified");
+  if (!email) {
+    throw new ApiError(400, "Email is required.");
   }
 
-  // Check if recent email was sent (rate limiting)
-  const lastEmailTime =
-    new Date(user.emailVerificationExpiry).getTime() - 20 * 60 * 1000; // 20 min ago
-  if (Date.now() - lastEmailTime < 2 * 60 * 1000) {
-    // 2 minutes
-    throw new ApiError(429, "Please wait before requesting another email");
+  const user = await db.user.findUnique({ where: { email } });
+  if (!user) throw new ApiError(404, "User not found.");
+
+  if (user.isEmailVerified) {
+    throw new ApiError(400, "Email is already verified.");
+  }
+
+  // Rate limiting logic: Prevent sending multiple emails too quickly
+  const twoMinutes = 2 * 60 * 1000; // 2 minutes in milliseconds
+  if (
+    user.lastVerificationEmailSentAt &&
+    Date.now() - new Date(user.lastVerificationEmailSentAt).getTime() < twoMinutes
+  ) {
+    const timeLeft = Math.ceil(
+      (twoMinutes - (Date.now() - new Date(user.lastVerificationEmailSentAt).getTime())) / 1000
+    );
+    throw new ApiError(429, `Please wait ${timeLeft} seconds before requesting another email.`);
   }
 
   // Generate new token and send email
@@ -169,11 +221,12 @@ export const resendVerificationEmail = asyncHandler(async (req, res) => {
     data: {
       emailVerificationToken: hashedToken,
       emailVerificationExpiry: tokenExpiry,
+      lastVerificationEmailSentAt: new Date(), // Update last sent time
     },
   });
 
   const mailContent = await verificationMailGenContent(
-    user.fullname, 
+    user.fullname,
     `${process.env.FRONTEND_BASE_URL}/verify-email/${unHashedToken}`
   );
 
@@ -189,30 +242,25 @@ export const resendVerificationEmail = asyncHandler(async (req, res) => {
 });
 
 export const signIn = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    throw new ApiError(400, "Email and password are required");
-  }
+  const { email, password } = signInSchema.parse(req.body);
 
   const user = await db.user.findUnique({ where: { email } });
-  if (!user) throw new ApiError(404, "User doesn't exist!");
+  if (!user) throw new ApiError(404, "Invalid credentials."); 
 
   if (user.isGoogleAuth) {
-    throw new ApiError(400, "Please login using Google authentication.");
+    throw new ApiError(400, "Please log in using Google authentication.");
   }
 
   if (!user.isEmailVerified) {
-    throw new ApiError(401, "Email is not verified!");
+    throw new ApiError(401, "Email is not verified. Please check your inbox or resend verification.");
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    throw new ApiError(401, "Invalid credentials");
+    throw new ApiError(401, "Invalid credentials.");
   }
 
-  const { accessToken, refreshToken } =
-    generateJWTTokens.generateAccessAndRefreshTokenAndSetCookie(user, res);
+  const { accessToken, refreshToken } = generateAndSetTokens(user, res);
 
   const updatedUser = await db.user.update({
     where: { id: user.id },
@@ -239,23 +287,31 @@ export const signIn = asyncHandler(async (req, res) => {
 });
 
 export const signOut = asyncHandler(async (req, res) => {
-  const user = await db.user.findUnique({
-    where: { id: req.userId },
-  });
+  // Assuming req.userId is set by an auth middleware
+  const userId = req.userId;
 
-  if (!user) {
-    throw new ApiError(404, "User not found!");
+  if (!userId) {
+    throw new ApiError(401, "Unauthorized: User ID not found in request.");
   }
 
   await db.user.update({
-    where: { id: user.id },
+    where: { id: userId },
     data: { refreshToken: null },
   });
 
-  res.clearCookie("accessToken");
-  res.clearCookie("refreshToken");
+  // Clear cookies (ensure these are configured with httpOnly for security)
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Lax", // Or "Strict" depending on your needs
+  });
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Lax",
+  });
 
-  res.status(200).json(new ApiResponse(200, "Logout successfully"));
+  res.status(200).json(new ApiResponse(200, "Logout successful."));
 });
 
 export const refreshToken = asyncHandler(async (req, res) => {
@@ -265,7 +321,7 @@ export const refreshToken = asyncHandler(async (req, res) => {
     req.header("Authorization")?.replace("Bearer ", "");
 
   if (!refreshTokenFromCookie) {
-    throw new ApiError(404, "No refresh token - Unauthorized");
+    throw new ApiError(401, "Unauthorized: No refresh token provided.");
   }
 
   try {
@@ -279,15 +335,22 @@ export const refreshToken = asyncHandler(async (req, res) => {
     });
 
     if (!user) {
-      throw new ApiError(404, "Invalid refresh token");
+      throw new ApiError(401, "Unauthorized: Invalid refresh token (user not found).");
     }
 
     if (refreshTokenFromCookie !== user.refreshToken) {
-      throw new ApiError(401, "Refresh token mismatch - Unauthorized");
+      // Rotate token or revoke all tokens if mismatch indicates potential token theft
+      logger.warn(`Refresh token mismatch for user ${user.id}. Possible token reuse attack.`);
+      // Consider revoking user's all tokens for better security
+      await db.user.update({
+        where: { id: user.id },
+        data: { refreshToken: null },
+      });
+      throw new ApiError(401, "Unauthorized: Refresh token compromised. Please log in again.");
     }
 
     const { accessToken, refreshToken: newRefreshToken } =
-      generateJWTTokens.generateAccessAndRefreshTokenAndSetCookie(user, res);
+      generateAndSetTokens(user, res);
 
     await db.user.update({
       where: { id: user.id },
@@ -295,31 +358,30 @@ export const refreshToken = asyncHandler(async (req, res) => {
     });
 
     res.status(200).json(
-      new ApiResponse(200, "Token refreshed successfully", {
+      new ApiResponse(200, "Tokens refreshed successfully.", {
         accessToken,
         refreshToken: newRefreshToken,
       })
     );
   } catch (err) {
-    throw new ApiError(403, "Invalid refresh token.");
+    logger.error("Error refreshing token:", err);
+    // Be generic for security reasons
+    throw new ApiError(403, "Unauthorized: Invalid or expired refresh token. Please log in again.");
   }
 });
 
 export const forgotPassword = asyncHandler(async (req, res) => {
-  const { email } = req.body;
-
-  if (!email) {
-    throw new ApiError(400, "Email is required");
-  }
+  const { email } = forgotPasswordSchema.parse(req.body);
 
   const user = await db.user.findUnique({ where: { email } });
 
   if (!user) {
-    throw new ApiError(404, "User doesn't exist!");
+    // Respond generically to avoid leaking information about existing emails
+    return res.status(200).json(new ApiResponse(200, "If an account with that email exists, a password reset link has been sent."));
   }
 
   if (!user.isEmailVerified) {
-    throw new ApiError(400, "Email is not verified!");
+    throw new ApiError(400, "Email is not verified. Please verify your email first.");
   }
 
   const { hashedToken, unHashedToken, tokenExpiry } = generateTemporaryToken();
@@ -347,11 +409,11 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 });
 
 export const resetPassword = asyncHandler(async (req, res) => {
-  const { password } = req.body;
+  const { password } = resetPasswordSchema.parse(req.body); 
   const { token } = req.params;
 
   if (!token) {
-    throw new ApiError(400, "Token is required");
+    throw new ApiError(400, "Password reset token is required.");
   }
 
   const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
@@ -361,11 +423,12 @@ export const resetPassword = asyncHandler(async (req, res) => {
   });
 
   if (!user) {
-    throw new ApiError(404, "Invalid or expired token.");
+    throw new ApiError(400, "Invalid or expired password reset token.");
   }
 
+  // Check token expiry specifically for forgot password
   if (user.forgotPasswordExpiry < new Date()) {
-    throw new ApiError(400, "Token expired. Please request a new one.");
+    throw new ApiError(400, "Password reset token has expired. Please request a new one.");
   }
 
   const hashedPassword = await hashPassword(password);
@@ -384,11 +447,12 @@ export const resetPassword = asyncHandler(async (req, res) => {
 });
 
 export const changePassword = asyncHandler(async (req, res) => {
-  const userId = req.userId;
-  const { oldPassword, newPassword } = req.body;
+  const userId = req.userId; 
 
-  if (!oldPassword || !newPassword) {
-    throw new ApiError(400, "Both old and new passwords are required.");
+  const { oldPassword, newPassword } = changePasswordSchema.parse(req.body);
+
+  if (!userId) {
+    throw new ApiError(401, "Unauthorized: User ID not found in request.");
   }
 
   const user = await db.user.findUnique({ where: { id: userId } });
@@ -421,11 +485,7 @@ export const changePassword = asyncHandler(async (req, res) => {
 });
 
 export const googleAuth = asyncHandler(async (req, res) => {
-  const { token } = req.body;
-
-  if (!token || typeof token !== "string") {
-    throw new ApiError(400, "Invalid Google ID token");
-  }
+  const { token } = googleAuthSchema.parse(req.body);
 
   try {
     const ticket = await oauth2Client.verifyIdToken({
@@ -437,34 +497,57 @@ export const googleAuth = asyncHandler(async (req, res) => {
     const { email, name: fullname, picture } = payload;
 
     if (!email) {
-      throw new ApiError(400, "Google authentication failed - no email found");
+      throw new ApiError(400, "Google authentication failed: No email found in token.");
     }
 
-    const existingUser = await db.user.findUnique({ where: { email } });
+    let existingUser = await db.user.findUnique({ where: { email } });
 
-    if (existingUser && !existingUser.isGoogleAuth) {
-      throw new ApiError(
-        400,
-        "Email already registered with password authentication"
+    if (existingUser) {
+      if (!existingUser.isGoogleAuth) {
+        throw new ApiError(
+          400,
+          "Email already registered with password authentication. Please use password to login."
+        );
+      }
+      // User exists and is registered with Google, proceed to login
+      const { accessToken, refreshToken } = generateAndSetTokens(existingUser, res);
+
+      await db.user.update({
+        where: { id: existingUser.id },
+        data: {
+          refreshToken,
+          lastLoginAt: new Date(),
+          profileImage: picture || existingUser.profileImage, // Update profile image if new one exists
+        },
+      });
+
+      return res.status(200).json(
+        new ApiResponse(200, "Login successful with Google.", {
+          user: {
+            id: existingUser.id,
+            email: existingUser.email,
+            fullname: existingUser.fullname,
+            profileImage: existingUser.profileImage,
+            isEmailVerified: existingUser.isEmailVerified,
+            role: existingUser.role,
+          },
+          accessToken,
+        })
       );
-    }
-
-    if (!existingUser) {
+    } else {
+      // New user via Google, create an account
       const newUser = await db.user.create({
         data: {
           email,
           fullname,
           profileImage: picture,
-          isEmailVerified: true,
+          isEmailVerified: true, // Google verifies email automatically
           isGoogleAuth: true,
+          lastLoginAt: new Date(),
         },
       });
 
-      const { accessToken, refreshToken } =
-        generateJWTTokens.generateAccessAndRefreshTokenAndSetCookie(
-          newUser,
-          res
-        );
+      const { accessToken, refreshToken } = generateAndSetTokens(newUser, res);
 
       await db.user.update({
         where: { id: newUser.id },
@@ -472,7 +555,7 @@ export const googleAuth = asyncHandler(async (req, res) => {
       });
 
       return res.status(200).json(
-        new ApiResponse(200, "Registration successful", {
+        new ApiResponse(200, "Registration successful with Google.", {
           user: {
             id: newUser.id,
             email: newUser.email,
@@ -485,36 +568,8 @@ export const googleAuth = asyncHandler(async (req, res) => {
         })
       );
     }
-
-    const { accessToken, refreshToken } =
-      generateJWTTokens.generateAccessAndRefreshTokenAndSetCookie(
-        existingUser,
-        res
-      );
-
-    await db.user.update({
-      where: { id: existingUser.id },
-      data: {
-        refreshToken,
-        lastLoginAt: new Date(),
-      },
-    });
-
-    return res.status(200).json(
-      new ApiResponse(200, "Login successful", {
-        user: {
-          id: existingUser.id,
-          email: existingUser.email,
-          fullname: existingUser.fullname,
-          profileImage: existingUser.profileImage,
-          isEmailVerified: existingUser.isEmailVerified,
-          role: existingUser.role,
-        },
-        accessToken,
-      })
-    );
   } catch (error) {
-    logger.error("Google auth error:", error);
-    throw new ApiError(500, "Google authentication failed");
+    logger.error("Google authentication error:", error);
+    throw new ApiError(500, "Google authentication failed. Please try again.");
   }
 });

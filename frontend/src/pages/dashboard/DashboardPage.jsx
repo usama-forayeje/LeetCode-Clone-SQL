@@ -31,7 +31,6 @@ function DashboardPage() {
 
   // Extract the actual user data
   const userData = user?.user || user;
-  console.log(userData);
 
 
   // Get user initials for avatar fallback

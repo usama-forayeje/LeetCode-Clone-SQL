@@ -35,7 +35,7 @@ export const useSignUp = () => {
       return res.data.data
     },
     onSuccess: (data) => {
-      toast.success("Account created successfully! Please check your email for verification link.")
+      toast.success("Account created successfully!...")
       navigate("/check-email", { state: { email: data.email } })
     },
     onError: (error) => {
@@ -124,8 +124,8 @@ export const useResetPassword = () => {
   const navigate = useNavigate()
 
   return useMutation({
-    mutationFn: async ({ token, password }) => {
-      await axiosClient.post(`/auth/reset-password/${token}`, { password })
+    mutationFn: async ({ token, password, confirmPassword }) => {
+      await axiosClient.post(`/auth/reset-password/${token}`, { password, confirmPassword })
     },
     onSuccess: () => {
       navigate("/login")
@@ -143,7 +143,7 @@ export const useVerifyEmail = () => {
 
   return useMutation({
     mutationFn: async (token) => {
-      const res = await axiosClient.get(`/auth/verify-email/${token}`)
+      const res = await axiosClient.post(`/auth/verify-email/${token}`)
       return res.data.data
     },
     onSuccess: () => {

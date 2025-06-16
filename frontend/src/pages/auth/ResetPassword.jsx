@@ -10,10 +10,10 @@ import { Loader2, Eye, EyeOff, CheckCircle, XCircle, Shield } from "lucide-react
 import { useParams } from "react-router"
 import { useResetPassword } from "@/querys/auth"
 import { resetPasswordSchema } from "@/schemas/auth"
+import { toast } from "sonner"
 
 export function ResetPasswordPage() {
   const { token } = useParams()
-  const { mutate: resetPassword, isPending } = useResetPassword()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
@@ -25,18 +25,38 @@ export function ResetPasswordPage() {
     },
   })
 
+  const { mutate: resetPassword, isPending } = useResetPassword({
+    onSuccess: () => {
+      toast.success("Password reset successfully");
+    },
+    onError: (error) => {
+      const backendErrors = error.response?.data?.errors;
+      if (backendErrors && Array.isArray(backendErrors)) {
+        backendErrors.forEach(err => {
+          if (err.path && err.path[0]) {
+            form.setError(err.path[0], {
+              type: "server",
+              message: err.message,
+            });
+          }
+        });
+      } else {
+        toast.error(error.response?.data?.message || "Password reset failed");
+      }
+    },
+  });
+
   const password = form.watch("password")
   const confirmPassword = form.watch("confirmPassword")
 
   const passwordRequirements = [
     { label: "At least 8 characters", met: password.length >= 8 },
-    { label: "One lowercase letter", met: /[a-z]/.test(password) },
     { label: "One number", met: /\d/.test(password) },
   ]
 
   const onSubmit = (data) => {
     if (!token) return
-    resetPassword({ token, password: data.password })
+    resetPassword({ token, password: data.password, confirmPassword: data.confirmPassword });
   }
 
   return (

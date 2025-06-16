@@ -1,5 +1,3 @@
-"use client"
-
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { motion } from "framer-motion"
@@ -15,13 +13,44 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Link } from "react-router"
+import { Link, Navigate, useNavigate } from "react-router"
+import { toast } from "sonner"
 
 function LoginPage() {
-  const { mutate: signIn, isPending } = useSignIn()
-  const { mutate: googleAuth } = useGoogleAuth()
+  const navigate = useNavigate(); 
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
+  const { mutate: signIn, isPending } = useSignIn({
+    onSuccess: () => {
+      toast.success("Login successfully.");
+      navigate("/dashboard");
+    },
+    onError: (error) => {
+      const backendErrors = error.response?.data?.errors;
+      if (backendErrors && Array.isArray(backendErrors)) {
+        backendErrors.forEach(err => {
+          if (err.path && err.path[0]) {
+            form.setError(err.path[0], {
+              type: "server",
+              message: err.message,
+            });
+          }
+        });
+      } else {
+        const errorMessage = error.response?.data?.message || "Login failed. Please check your credentials.";
+        form.setError("email", {
+          type: "server",
+          message: errorMessage,
+        });
+      }
+    },
+  });
+
+  const { mutate: googleAuth } = useGoogleAuth({
+    onError: (error) => {
+      toast.error(error.response?.data?.message || "Google registration failed");
+    }
+  })
 
   const form = useForm({
     resolver: zodResolver(signInSchema),
@@ -53,7 +82,7 @@ function LoginPage() {
                 onSuccess={(credentialResponse) => {
                   googleAuth(credentialResponse.credential)
                 }}
-                onError={() => {}}
+                onError={() => { }}
                 useOneTap={false}
                 text="signin_with"
                 shape="rectangular"
