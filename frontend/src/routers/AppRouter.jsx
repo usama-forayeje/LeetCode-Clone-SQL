@@ -13,6 +13,7 @@ import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminRoute from './AdminRoute';
 import NotFoundPage from '@/pages/NotFoundPage';
 import AuthLayout from '@/components/layouts/AuthLayout';
+import CheckEmailPage from '@/pages/auth/CheckEmailPage';
 
 
 
@@ -20,6 +21,7 @@ function AppRouter() {
   return (
     <Routes>
       {/* Public Routes without layout */}
+      <Route path="/check-email" element={<CheckEmailPage />} />
       <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
       <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
