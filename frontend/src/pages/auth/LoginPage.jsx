@@ -14,14 +14,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { signInSchema } from "@/schemas/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
-import { Link, Navigate, useNavigate } from "react-router";
+import { Link } from "react-router";
 import { toast } from "sonner";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 
 function LoginPage() {
   const { mutate: signIn, isPending } = useSignIn();
-  const { mutate: googleAuth, isPending: isGooglePending } = useGoogleAuth();
-  const navigate = useNavigate();
+  const { mutate: googleAuth } = useGoogleAuth();
+  
   const form = useForm({
     resolver: zodResolver(signInSchema),
     defaultValues: {
@@ -31,14 +31,7 @@ function LoginPage() {
   });
 
   const onSubmit = (data) => {
-    signIn(data);
-    navigate("/dashboard");
-  };
-
-  const handleGoogleSuccess = (credentialResponse) => {
-    googleAuth(credentialResponse.credential, {
-      onSuccess: () => navigate("/dashboard"),
-    });
+    signIn(data); 
   };
 
   return (
@@ -52,10 +45,7 @@ function LoginPage() {
            <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
             <GoogleLogin
               onSuccess={(credentialResponse) => {
-                googleAuth(credentialResponse.credential, {
-                  onSuccess: () => navigate("/dashboard"),
-                  onError: (error) => toast.error("Google login failed"),
-                });
+                googleAuth(credentialResponse.credential); 
               }}
               onError={() => toast.error("Google login failed")}
               useOneTap
@@ -65,6 +55,7 @@ function LoginPage() {
               width="100%"
             />
           </GoogleOAuthProvider>
+          
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
@@ -138,4 +129,4 @@ function LoginPage() {
   );
 }
 
-export default LoginPage
+export default LoginPage;

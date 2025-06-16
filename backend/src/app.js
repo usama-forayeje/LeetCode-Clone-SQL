@@ -57,13 +57,6 @@ app.use("/api/v1/playlists", playlistRoutes);
 app.use("/api/v1/sheets", sheetRoutes);
 app.use("/api/v1/payment", paymentRoutes);
 app.use("/api/v1/health", healthRoute);
-console.log("Final problem routes:");
-problemsRoutes.stack.forEach(layer => {
-  if (layer.route) {
-    console.log(layer.route.path);
-  }
-});
-
 // Error handler should be last
 app.use(errorHandler);
 

@@ -21,6 +21,19 @@ const hashPassword = async (password) => {
 export const signUp = asyncHandler(async (req, res) => {
   const { fullname, email, password } = req.body;
 
+  if (!fullname || !email || !password) {
+    throw new ApiError(400, "All fields are required");
+  }
+
+  if (password.length < 6) {
+    throw new ApiError(400, "Password must be at least 6 characters");
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    throw new ApiError(400, "Invalid email format");
+  }
+
   const existingUser = await db.user.findUnique({ where: { email } });
 
   if (existingUser && existingUser.isEmailVerified) {
@@ -130,8 +143,57 @@ export const verifyEmail = asyncHandler(async (req, res) => {
   );
 });
 
+export const resendVerificationEmail = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  const user = await db.user.findUnique({ where: { email } });
+  if (!user) throw new ApiError(404, "User not found");
+
+  if (user.isEmailVerified) {
+    throw new ApiError(400, "Email already verified");
+  }
+
+  // Check if recent email was sent (rate limiting)
+  const lastEmailTime =
+    new Date(user.emailVerificationExpiry).getTime() - 20 * 60 * 1000; // 20 min ago
+  if (Date.now() - lastEmailTime < 2 * 60 * 1000) {
+    // 2 minutes
+    throw new ApiError(429, "Please wait before requesting another email");
+  }
+
+  // Generate new token and send email
+  const { hashedToken, unHashedToken, tokenExpiry } = generateTemporaryToken();
+
+  await db.user.update({
+    where: { id: user.id },
+    data: {
+      emailVerificationToken: hashedToken,
+      emailVerificationExpiry: tokenExpiry,
+    },
+  });
+
+  const mailContent = await verificationMailGenContent(
+    user.fullname, 
+    `${process.env.FRONTEND_BASE_URL}/verify-email/${unHashedToken}`
+  );
+
+  await sendMail({
+    email,
+    subject: "Verify your email!",
+    mailgenContent: mailContent,
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Verification email sent successfully!"));
+});
+
 export const signIn = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+
+  if (!email || !password) {
+    throw new ApiError(400, "Email and password are required");
+  }
 
   const user = await db.user.findUnique({ where: { email } });
   if (!user) throw new ApiError(404, "User doesn't exist!");
@@ -154,9 +216,9 @@ export const signIn = asyncHandler(async (req, res) => {
 
   const updatedUser = await db.user.update({
     where: { id: user.id },
-    data: { 
+    data: {
       refreshToken,
-      lastLoginAt: new Date()
+      lastLoginAt: new Date(),
     },
     select: {
       id: true,
@@ -168,12 +230,12 @@ export const signIn = asyncHandler(async (req, res) => {
     },
   });
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, "User signed in successfully", {
+  return res.status(200).json(
+    new ApiResponse(200, "User signed in successfully", {
       user: updatedUser,
-      accessToken
-    }));
+      accessToken,
+    })
+  );
 });
 
 export const signOut = asyncHandler(async (req, res) => {
@@ -199,6 +261,7 @@ export const signOut = asyncHandler(async (req, res) => {
 export const refreshToken = asyncHandler(async (req, res) => {
   const refreshTokenFromCookie =
     req.cookies?.refreshToken ||
+    req.body?.refreshToken ||
     req.header("Authorization")?.replace("Bearer ", "");
 
   if (!refreshTokenFromCookie) {
@@ -354,14 +417,7 @@ export const changePassword = asyncHandler(async (req, res) => {
     },
   });
 
-  res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        "Password changed successfully."
-      )
-    );
+  res.status(200).json(new ApiResponse(200, "Password changed successfully."));
 });
 
 export const googleAuth = asyncHandler(async (req, res) => {
@@ -387,7 +443,10 @@ export const googleAuth = asyncHandler(async (req, res) => {
     const existingUser = await db.user.findUnique({ where: { email } });
 
     if (existingUser && !existingUser.isGoogleAuth) {
-      throw new ApiError(400, "Email already registered with password authentication");
+      throw new ApiError(
+        400,
+        "Email already registered with password authentication"
+      );
     }
 
     if (!existingUser) {
@@ -400,12 +459,16 @@ export const googleAuth = asyncHandler(async (req, res) => {
           isGoogleAuth: true,
         },
       });
-      
-      const { accessToken, refreshToken } = generateJWTTokens.generateAccessAndRefreshTokenAndSetCookie(newUser, res);
+
+      const { accessToken, refreshToken } =
+        generateJWTTokens.generateAccessAndRefreshTokenAndSetCookie(
+          newUser,
+          res
+        );
 
       await db.user.update({
         where: { id: newUser.id },
-        data: { refreshToken }
+        data: { refreshToken },
       });
 
       return res.status(200).json(
@@ -423,14 +486,18 @@ export const googleAuth = asyncHandler(async (req, res) => {
       );
     }
 
-    const { accessToken, refreshToken } = generateJWTTokens.generateAccessAndRefreshTokenAndSetCookie(existingUser, res);
-    
+    const { accessToken, refreshToken } =
+      generateJWTTokens.generateAccessAndRefreshTokenAndSetCookie(
+        existingUser,
+        res
+      );
+
     await db.user.update({
       where: { id: existingUser.id },
-      data: { 
+      data: {
         refreshToken,
-        lastLoginAt: new Date()
-      }
+        lastLoginAt: new Date(),
+      },
     });
 
     return res.status(200).json(

@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import { logger } from "../libs/logger.js";
 
 export const generateJWTTokens = {
   generateAccessToken(user) {
@@ -8,9 +9,12 @@ export const generateJWTTokens = {
     });
   },
 
+  
+
   generateRefreshToken(user) {
     return jwt.sign({ id: user.id }, process.env.REFRESH_TOKEN_SECRET, {
       expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN,
+      
     });
   },
 

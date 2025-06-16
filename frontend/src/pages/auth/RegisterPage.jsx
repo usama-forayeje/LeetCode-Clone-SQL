@@ -1,4 +1,4 @@
-import { Link, Navigate, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,14 +16,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 function RegisterPage() {
   const { mutate: signUp, isPending } = useSignUp();
   const { mutate: googleAuth } = useGoogleAuth();
-  const navigate = useNavigate();
-
 
   const form = useForm({
     resetMode: "onSubmit",
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      name: "",
+      fullname: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -32,14 +30,8 @@ function RegisterPage() {
 
   const onSubmit = (data) => {
     signUp(data);
-    navigate("/verify-email", { state: { email: data.email } });
   };
 
-  const handleGoogleSuccess = (credentialResponse) => {
-    googleAuth(credentialResponse.credential, {
-      onSuccess: () => navigate("/dashboard"),
-    });
-  };
   return (
     <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-background">
       <Card className="w-full max-w-md shadow-lg rounded-2xl border border-border">
@@ -53,7 +45,7 @@ function RegisterPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="name"
+                name="fullname" 
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Full Name</FormLabel>
@@ -130,10 +122,7 @@ function RegisterPage() {
           <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
             <GoogleLogin
               onSuccess={(credentialResponse) => {
-                googleAuth(credentialResponse.credential, {
-                  onSuccess: () => navigate("/dashboard"),
-                  onError: (error) => toast.error("Google login failed"),
-                });
+                googleAuth(credentialResponse.credential); 
               }}
               onError={() => toast.error("Google login failed")}
               useOneTap
@@ -156,5 +145,4 @@ function RegisterPage() {
   );
 }
 
-
-export default RegisterPage
+export default RegisterPage;

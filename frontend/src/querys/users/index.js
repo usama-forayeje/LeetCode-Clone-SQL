@@ -9,6 +9,7 @@ export const useCurrentUser = () => {
     queryKey: ["users", "me"],
     queryFn: async () => {
       const res = await axiosClient.get("/users/me");
+       console.log('API Response:', res.data);
       return res.data.data;
     },
     staleTime: 5 * 60 * 1000,

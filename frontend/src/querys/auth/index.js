@@ -101,7 +101,7 @@ export const useSignOut = () => {
     },
     onSuccess: () => {
       queryClient.removeQueries();
-      navigate("/sign-in", { replace: true });
+      navigate("/login", { replace: true });
       toast.success("You've been signed out");
     },
     onError: (error) => {
