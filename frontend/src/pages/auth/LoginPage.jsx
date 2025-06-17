@@ -17,7 +17,7 @@ import { Link, Navigate, useNavigate } from "react-router"
 import { toast } from "sonner"
 
 function LoginPage() {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
   const { mutate: signIn, isPending } = useSignIn({

@@ -44,7 +44,6 @@ function AppRouter() {
       {/* Protected Admin Routes with AdminLayout */}
       <Route element={<AdminLayout />}>
         <Route element={<AdminRoute />}>
-          {/* Example Admin Routes */}
           {/* <Route path="/admin" element={<AdminDashboard />} /> */}
           {/* <Route path="/admin/users" element={<UserManagementPage />} /> */}
         </Route>
