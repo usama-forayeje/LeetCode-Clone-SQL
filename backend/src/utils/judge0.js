@@ -39,7 +39,6 @@ export const submitBatch = async (submissions) => {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Check all submissions results until all are done
 export const pollBatchResults = async (tokens) => {
   while (true) {
     const { data } = await axios.get(
@@ -68,6 +67,12 @@ export function getLanguageName(languageId) {
     71: "PYTHON",
     62: "JAVA",
     63: "JAVASCRIPT",
+    64: "KOTLIN",
+    // typescript
+    65: "C",
+    66: "C++",
+
+
   };
   return LANGUAGE_NAMES[languageId] || "Unknown";
 }

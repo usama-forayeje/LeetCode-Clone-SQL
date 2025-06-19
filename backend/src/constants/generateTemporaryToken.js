@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 
+
 export const generateResetToken = () => {
   const unHashedToken = crypto.randomBytes(32).toString("hex");
   const hashedToken = crypto
@@ -11,7 +12,6 @@ export const generateResetToken = () => {
 
   return { unHashedToken, hashedToken, tokenExpiry };
 };
-
 export const generateEmailToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
