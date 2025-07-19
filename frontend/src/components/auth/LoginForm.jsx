@@ -2,7 +2,7 @@ import React from 'react'
 
 function loginForm() {
   return (
-    <div>loginForm</div>
+    <div>logIn</div>
   )
 }
 
